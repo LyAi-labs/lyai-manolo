@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Check, Play, FileText, Lock, ListChecks } from 'lucide-react'
 import { getLessons } from '../lib/api'
 
@@ -36,8 +37,9 @@ export default function Biblioteca() {
       <div className="mt-5 space-y-3">
         {list.map((l) => {
           const Icon = l.locked ? Lock : typeIcon[l.type] || Play
-          return (
-            <div key={l.id} className={`rounded-2xl bg-white ring-1 ring-slate-100 p-4 ${l.locked ? 'opacity-60' : ''}`}>
+          const cls = `block rounded-2xl bg-white ring-1 ring-slate-100 p-4 ${l.locked ? 'opacity-60' : ''}`
+          const inner = (
+            <>
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 ${
@@ -72,7 +74,12 @@ export default function Biblioteca() {
                   />
                 </div>
               )}
-            </div>
+            </>
+          )
+          return l.locked ? (
+            <div key={l.id} className={cls}>{inner}</div>
+          ) : (
+            <Link key={l.id} to={`/leccion/${l.id}`} className={cls}>{inner}</Link>
           )
         })}
       </div>

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -29,6 +29,14 @@ def lessons(level: Optional[str] = None, db: Session = Depends(get_db)):
     if level and level != "Todos":
         q = q.filter(Lesson.level == level)
     return q.all()
+
+
+@router.get("/lessons/{lesson_id}", response_model=LessonOut)
+def lesson_detail(lesson_id: int, db: Session = Depends(get_db)):
+    lesson = db.get(Lesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    return lesson
 
 
 @router.get("/lessons/{lesson_id}/vocab")

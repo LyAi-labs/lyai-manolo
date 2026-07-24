@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 import Reservar from './pages/Reservar'
 import Biblioteca from './pages/Biblioteca'
+import Leccion from './pages/Leccion'
 import MiPanel from './pages/MiPanel'
 import PanelManolo from './pages/PanelManolo'
 import Aula from './pages/Aula'
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/reservar" element={<Reservar />} />
           <Route path="/biblioteca" element={<Biblioteca />} />
+          <Route path="/leccion/:id" element={<Leccion />} />
           <Route path="/panel" element={<MiPanel />} />
 
           {/* Solo profesor/admin */}
