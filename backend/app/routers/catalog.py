@@ -1,15 +1,34 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import ClassType, Availability, Lesson, Vocab
+from ..models import ClassType, Availability, Lesson, Vocab, LessonProgress, User
 from ..schemas import ClassTypeOut, LessonOut
 from ..curriculum import audio_slug
+from ..auth import get_current_user
 from ..config import settings
 
 router = APIRouter(tags=["catalog"])
+
+
+@router.post("/lessons/{lesson_id}/complete")
+def complete_lesson(lesson_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not db.get(Lesson, lesson_id):
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    exists = db.query(LessonProgress).filter_by(user_id=user.id, lesson_id=lesson_id).first()
+    if not exists:
+        db.add(LessonProgress(user_id=user.id, lesson_id=lesson_id, completed_at=datetime.utcnow().isoformat()))
+        db.commit()
+    return {"ok": True}
+
+
+@router.get("/me/progress")
+def my_progress(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    ids = [p.lesson_id for p in db.query(LessonProgress).filter_by(user_id=user.id).all()]
+    return {"completed": ids, "count": len(ids)}
 
 
 @router.get("/class-types", response_model=list[ClassTypeOut])

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Play, FileText, Lock, ListChecks } from 'lucide-react'
-import { getLessons } from '../lib/api'
+import { getLessons, getMyProgress } from '../lib/api'
 
 const levels = ['Todos', 'A1', 'A2', 'B1', 'B2', 'C1']
 const typeIcon = { video: Play, ejercicio: ListChecks, pdf: FileText }
@@ -9,9 +9,11 @@ const typeIcon = { video: Play, ejercicio: ListChecks, pdf: FileText }
 export default function Biblioteca() {
   const [level, setLevel] = useState('Todos')
   const [lessons, setLessons] = useState([])
+  const [completed, setCompleted] = useState(new Set())
 
   useEffect(() => {
     getLessons().then(setLessons).catch(() => {})
+    getMyProgress().then((p) => setCompleted(new Set(p.completed))).catch(() => {})
   }, [])
 
   const list = lessons.filter((l) => level === 'Todos' || l.level === level)
@@ -36,50 +38,42 @@ export default function Biblioteca() {
 
       <div className="mt-5 space-y-3">
         {list.map((l) => {
+          const doneL = completed.has(l.id)
           const Icon = l.locked ? Lock : typeIcon[l.type] || Play
           const cls = `block rounded-2xl bg-white ring-1 ring-slate-100 p-4 ${l.locked ? 'opacity-60' : ''}`
           const inner = (
-            <>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 ${
-                    l.progress === 100 ? 'bg-emerald-50 text-emerald-500' : 'bg-brand-50 text-brand-600'
-                  }`}
-                >
-                  {l.progress === 100 ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold truncate">{l.title}</div>
-                  <div className="text-[11px] text-slate-400">
-                    {l.meta} · {l.level}
-                  </div>
-                </div>
-                {l.locked ? (
-                  <Lock className="w-4 h-4 text-slate-300" />
-                ) : (
-                  <span
-                    className={`text-xs font-bold ${
-                      l.progress === 100 ? 'text-emerald-500' : l.progress > 0 ? 'text-brand-600' : 'text-slate-400'
-                    }`}
-                  >
-                    {l.progress}%
-                  </span>
-                )}
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 ${
+                  doneL ? 'bg-emerald-50 text-emerald-500' : 'bg-brand-50 text-brand-600'
+                }`}
+              >
+                {doneL ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </div>
-              {!l.locked && (
-                <div className="mt-2.5 h-1.5 rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full ${l.progress === 100 ? 'bg-emerald-500' : 'bg-brand-600'}`}
-                    style={{ width: `${l.progress}%` }}
-                  />
+              <div className="flex-1 min-w-0">
+                <div className="font-bold truncate">{l.title}</div>
+                <div className="text-[11px] text-slate-400">
+                  {l.meta} · {l.level}
                 </div>
-              )}
-            </>
+              </div>
+              {l.locked ? (
+                <Lock className="w-4 h-4 text-slate-300" />
+              ) : doneL ? (
+                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Hecho
+                </span>
+              ) : null}
+            </div>
           )
           return l.locked ? (
-            <div key={l.id} className={cls}>{inner}</div>
+            <div key={l.id} className={cls}>
+              {inner}
+            </div>
           ) : (
-            <Link key={l.id} to={`/leccion/${l.id}`} className={cls}>{inner}</Link>
+            <Link key={l.id} to={`/leccion/${l.id}`} className={cls}>
+              {inner}
+            </Link>
           )
         })}
       </div>

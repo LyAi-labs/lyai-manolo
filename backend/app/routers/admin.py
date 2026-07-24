@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Booking, User, Lesson
+from ..models import Booking, User, Lesson, LessonProgress
 from ..auth import get_current_user, hash_password
 from ..schemas import UserOut, StudentCreate, StudentCreated
 from ..config import settings
@@ -51,6 +51,20 @@ def stats(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
 @router.get("/admin/students", response_model=list[UserOut])
 def list_students(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     return db.query(User).filter(User.role == "student").order_by(User.name).all()
+
+
+@router.get("/admin/students/{student_id}/progress")
+def student_progress(student_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    stu = db.get(User, student_id)
+    if not stu or stu.role != "student":
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+    done_ids = {p.lesson_id for p in db.query(LessonProgress).filter_by(user_id=student_id).all()}
+    lessons = db.query(Lesson).filter(Lesson.id.in_(done_ids)).all() if done_ids else []
+    return {
+        "student": {"id": stu.id, "name": stu.name, "level": stu.level},
+        "completed": [{"id": lo.id, "title": lo.title, "level": lo.level} for lo in lessons],
+        "count": len(done_ids),
+    }
 
 
 @router.post("/admin/students", response_model=StudentCreated)

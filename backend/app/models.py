@@ -72,3 +72,11 @@ class Vocab(Base):
     fr = Column(String)   # palabra/expresión en francés
     es = Column(String)   # traducción en español
     idx = Column(Integer, default=0)
+
+
+class LessonProgress(Base):
+    __tablename__ = "lesson_progress"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), index=True)
+    completed_at = Column(String)

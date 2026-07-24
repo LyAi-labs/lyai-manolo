@@ -10,7 +10,9 @@ def run_curriculum_seed():
     Idempotente: solo reescribe si el nº de lecciones no coincide."""
     db = SessionLocal()
     try:
-        if db.query(Lesson).count() == len(CURRICULUM):
+        expected_vocab = sum(len(u.get("vocab", [])) for u in CURRICULUM)
+        if (db.query(Lesson).count() == len(CURRICULUM)
+                and db.query(Vocab).count() == expected_vocab):
             return
         db.query(Vocab).delete()
         db.query(Lesson).delete()

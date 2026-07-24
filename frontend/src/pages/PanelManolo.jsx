@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarClock, Upload, BadgeCheck, Clock, Plus, Video, ArrowLeft,
-  UserPlus, X, KeyRound,
+  UserPlus, X, KeyRound, BookOpen, Check, Lightbulb, ChevronRight,
 } from 'lucide-react'
-import { getAdminStats, getAdminToday, getStudents, createStudent } from '../lib/api'
+import {
+  getAdminStats, getAdminToday, getStudents, createStudent, getStudentProgress,
+} from '../lib/api'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1']
 
@@ -13,6 +15,14 @@ export default function PanelManolo() {
   const [today, setToday] = useState([])
   const [students, setStudents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
+  const [prep, setPrep] = useState(null) // { student, completed, count }
+
+  function openPrep(s) {
+    setPrep({ student: { id: s.id, name: s.name, level: s.level }, completed: null, count: 0, loading: true })
+    getStudentProgress(s.id)
+      .then((p) => setPrep({ ...p, loading: false }))
+      .catch(() => setPrep(null))
+  }
 
   useEffect(() => {
     getAdminStats().then(setStats).catch(() => {})
@@ -101,7 +111,11 @@ export default function PanelManolo() {
             </div>
           )}
           {students.map((s) => (
-            <div key={s.id} className="rounded-xl bg-white ring-1 ring-slate-100 p-3 flex items-center gap-3">
+            <button
+              key={s.id}
+              onClick={() => openPrep(s)}
+              className="w-full text-left rounded-xl bg-white ring-1 ring-slate-100 p-3 flex items-center gap-3 hover:ring-brand-200"
+            >
               <div className="w-9 h-9 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
                 {s.name.charAt(0)}
               </div>
@@ -112,7 +126,8 @@ export default function PanelManolo() {
               {s.level && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-700">{s.level}</span>
               )}
-            </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </button>
           ))}
         </div>
       </div>
@@ -137,6 +152,70 @@ export default function PanelManolo() {
           }}
         />
       )}
+
+      {prep && <PrepModal prep={prep} onClose={() => setPrep(null)} />}
+    </div>
+  )
+}
+
+function PrepModal({ prep, onClose }) {
+  const { student, completed, count, loading } = prep
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 grid place-items-end sm:place-items-center p-0 sm:p-6">
+      <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
+              {student.name.charAt(0)}
+            </div>
+            <div>
+              <div className="font-extrabold leading-tight">{student.name}</div>
+              <div className="text-[11px] text-slate-400">Nivel {student.level || '—'}</div>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-brand-600" />
+          <div className="text-[13px] text-brand-800">
+            Ha estudiado <b>{loading ? '…' : count}</b> {count === 1 ? 'lección' : 'lecciones'} en la biblioteca
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lecciones completadas</div>
+          {loading ? (
+            <div className="text-[13px] text-slate-400">Cargando…</div>
+          ) : completed && completed.length ? (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {completed.map((l) => (
+                <div key={l.id} className="flex items-center gap-2 text-[13px]">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="font-medium">{l.title}</span>
+                  <span className="text-[10px] text-slate-400">{l.level}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[13px] text-slate-400">Aún no ha completado ninguna lección.</div>
+          )}
+        </div>
+
+        <div className="mt-3 rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3 flex items-start gap-2">
+          <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <div className="text-[12px] text-amber-800">
+            <b>Recomendación:</b> empieza la clase repasando lo que ha estudiado y refuerza la pronunciación.
+            <span className="text-amber-500"> (el análisis de errores llega con los ejercicios)</span>
+          </div>
+        </div>
+
+        <button onClick={onClose} className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3">
+          Cerrar
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Play, Pause, Volume2, Check } from 'lucide-react'
-import { getLesson, getVocab } from '../lib/api'
+import { getLesson, getVocab, getMyProgress, completeLesson } from '../lib/api'
 
 const TYPE_LABEL = { video: 'Vídeo', ejercicio: 'Ejercicio', pdf: 'PDF' }
 
@@ -16,10 +16,15 @@ export default function Leccion() {
   useEffect(() => {
     getLesson(id).then(setLesson).catch(() => {})
     getVocab(id).then(setVocab).catch(() => setVocab([]))
+    getMyProgress().then((p) => setDone(p.completed.includes(Number(id)))).catch(() => {})
     return () => {
       if (audioRef.current) audioRef.current.pause()
     }
   }, [id])
+
+  function marcarCompletada() {
+    completeLesson(id).then(() => setDone(true)).catch(() => setDone(true))
+  }
 
   function play(i, url) {
     if (audioRef.current) audioRef.current.pause()
@@ -110,7 +115,7 @@ export default function Leccion() {
             </div>
           ) : (
             <button
-              onClick={() => setDone(true)}
+              onClick={marcarCompletada}
               className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3"
             >
               Marcar como completada
