@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Optional
 
@@ -5,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import ClassType, Availability, Lesson, Vocab, LessonProgress, User
+from ..models import ClassType, Availability, Lesson, Vocab, LessonProgress, User, ClassReport
 from ..schemas import ClassTypeOut, LessonOut
 from ..curriculum import audio_slug
 from ..auth import get_current_user
@@ -29,6 +30,19 @@ def complete_lesson(lesson_id: int, user: User = Depends(get_current_user), db: 
 def my_progress(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     ids = [p.lesson_id for p in db.query(LessonProgress).filter_by(user_id=user.id).all()]
     return {"completed": ids, "count": len(ids)}
+
+
+@router.get("/me/homework")
+def my_homework(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rep = (
+        db.query(ClassReport)
+        .filter_by(student_id=user.id)
+        .order_by(ClassReport.id.desc())
+        .first()
+    )
+    if not rep:
+        return {"has": False}
+    return {"has": True, "created_at": rep.created_at, "material": json.loads(rep.material)}
 
 
 @router.get("/class-types", response_model=list[ClassTypeOut])

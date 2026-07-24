@@ -72,3 +72,8 @@ class StudentCreate(BaseModel):
 class StudentCreated(BaseModel):
     student: UserOut
     temp_password: str
+
+
+class FinalizeIn(BaseModel):
+    student_id: int
+    notes: str

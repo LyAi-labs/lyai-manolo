@@ -1,12 +1,15 @@
+import json
 import secrets
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Booking, User, Lesson, LessonProgress
+from ..models import Booking, User, Lesson, LessonProgress, ClassReport
 from ..auth import get_current_user, hash_password
-from ..schemas import UserOut, StudentCreate, StudentCreated
+from ..schemas import UserOut, StudentCreate, StudentCreated, FinalizeIn
+from ..gemini import generate_json
 from ..config import settings
 
 router = APIRouter(tags=["admin"])
@@ -16,6 +19,39 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role not in ("admin", "teacher"):
         raise HTTPException(status_code=403, detail="Solo el profesor puede acceder")
     return user
+
+
+@router.post("/admin/classes/finalize")
+def finalize_class(data: FinalizeIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    stu = db.get(User, data.student_id)
+    if not stu or stu.role != "student":
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+    prompt = (
+        f"Eres el asistente de Manolo, profesor de francés. Acaba de dar una clase particular a "
+        f"{stu.name} (nivel {stu.level or 'A1'}). Notas del profesor sobre la clase de hoy:\n"
+        f"{data.notes}\n\n"
+        "Genera material de seguimiento para el alumno. Devuelve SOLO un JSON con esta forma exacta: "
+        '{"resumen": "2-3 frases resumiendo la clase", '
+        '"ejercicios": ["3 a 5 ejercicios cortos"], '
+        '"flashcards": [{"fr": "palabra o frase en francés", "es": "traducción"}], '
+        '"deberes": "1-2 frases con la tarea para la próxima clase"}. '
+        "Incluye 5-8 flashcards. Instrucciones en español; ejemplos, vocabulario y flashcards en francés. "
+        "Adáptalo al nivel del alumno."
+    )
+    try:
+        material = generate_json(prompt)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"La IA no pudo generar el material: {str(e)[:100]}")
+    rep = ClassReport(
+        student_id=stu.id,
+        teacher_notes=data.notes,
+        material=json.dumps(material, ensure_ascii=False),
+        created_at=datetime.utcnow().isoformat(),
+    )
+    db.add(rep)
+    db.commit()
+    db.refresh(rep)
+    return {"id": rep.id, "student": stu.name, "material": material}
 
 
 @router.get("/admin/today")

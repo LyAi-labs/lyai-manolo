@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg2://manolo:manolo@manolo-postgres:5432/manolo"
     JWT_SECRET: str = "dev-secret-change-me"
     JWT_EXPIRE_MIN: int = 60 * 24 * 7  # 7 días
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-flash-latest"
     # Fecha "hoy" fija para que el demo cuadre con los datos sembrados.
     DEMO_TODAY: str = "2026-07-24"
 

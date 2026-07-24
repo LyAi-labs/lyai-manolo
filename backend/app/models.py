@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -80,3 +80,12 @@ class LessonProgress(Base):
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), index=True)
     completed_at = Column(String)
+
+
+class ClassReport(Base):
+    __tablename__ = "class_reports"
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, ForeignKey("users.id"), index=True)
+    teacher_notes = Column(Text)
+    material = Column(Text)   # JSON: {resumen, ejercicios[], flashcards[], deberes}
+    created_at = Column(String)

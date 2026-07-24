@@ -27,6 +27,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@manolo-postgres:5432/${DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     depends_on:
       manolo-postgres:
         condition: service_healthy
