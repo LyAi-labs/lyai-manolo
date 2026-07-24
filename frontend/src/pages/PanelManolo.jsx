@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarClock, Upload, BadgeCheck, Clock, Plus, Video, ArrowLeft,
-  UserPlus, X, KeyRound, BookOpen, Check, Lightbulb, ChevronRight,
+  UserPlus, X, KeyRound, BookOpen, Check, Lightbulb, ChevronRight, Sparkles,
 } from 'lucide-react'
 import {
-  getAdminStats, getAdminToday, getStudents, createStudent, getStudentProgress,
+  getAdminStats, getAdminToday, getStudents, createStudent, getStudentProgress, finalizeClass,
 } from '../lib/api'
+import MaterialView from '../components/MaterialView'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1']
 
@@ -160,9 +161,29 @@ export default function PanelManolo() {
 
 function PrepModal({ prep, onClose }) {
   const { student, completed, count, loading } = prep
+  const [mode, setMode] = useState('prep') // prep | finalize | material
+  const [notes, setNotes] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [material, setMaterial] = useState(null)
+  const [error, setError] = useState('')
+
+  async function generar() {
+    setError('')
+    setGenerating(true)
+    try {
+      const res = await finalizeClass({ student_id: student.id, notes: notes.trim() })
+      setMaterial(res.material)
+      setMode('material')
+    } catch (e) {
+      setError('La IA no pudo generar el material. Reinténtalo.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 grid place-items-end sm:place-items-center p-0 sm:p-6">
-      <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl">
+      <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[88vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
@@ -178,43 +199,95 @@ function PrepModal({ prep, onClose }) {
           </button>
         </div>
 
-        <div className="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-brand-600" />
-          <div className="text-[13px] text-brand-800">
-            Ha estudiado <b>{loading ? '…' : count}</b> {count === 1 ? 'lección' : 'lecciones'} en la biblioteca
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lecciones completadas</div>
-          {loading ? (
-            <div className="text-[13px] text-slate-400">Cargando…</div>
-          ) : completed && completed.length ? (
-            <div className="space-y-1.5 max-h-48 overflow-y-auto">
-              {completed.map((l) => (
-                <div key={l.id} className="flex items-center gap-2 text-[13px]">
-                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="font-medium">{l.title}</span>
-                  <span className="text-[10px] text-slate-400">{l.level}</span>
-                </div>
-              ))}
+        {mode === 'prep' && (
+          <>
+            <div className="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-brand-600" />
+              <div className="text-[13px] text-brand-800">
+                Ha estudiado <b>{loading ? '…' : count}</b> {count === 1 ? 'lección' : 'lecciones'} en la biblioteca
+              </div>
             </div>
-          ) : (
-            <div className="text-[13px] text-slate-400">Aún no ha completado ninguna lección.</div>
-          )}
-        </div>
 
-        <div className="mt-3 rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3 flex items-start gap-2">
-          <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <div className="text-[12px] text-amber-800">
-            <b>Recomendación:</b> empieza la clase repasando lo que ha estudiado y refuerza la pronunciación.
-            <span className="text-amber-500"> (el análisis de errores llega con los ejercicios)</span>
-          </div>
-        </div>
+            <div className="mt-3">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Lecciones completadas</div>
+              {loading ? (
+                <div className="text-[13px] text-slate-400">Cargando…</div>
+              ) : completed && completed.length ? (
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {completed.map((l) => (
+                    <div key={l.id} className="flex items-center gap-2 text-[13px]">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="font-medium">{l.title}</span>
+                      <span className="text-[10px] text-slate-400">{l.level}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[13px] text-slate-400">Aún no ha completado ninguna lección.</div>
+              )}
+            </div>
 
-        <button onClick={onClose} className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3">
-          Cerrar
-        </button>
+            <div className="mt-3 rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3 flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="text-[12px] text-amber-800">
+                <b>Recomendación:</b> empieza repasando lo que ha estudiado y refuerza la pronunciación.
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMode('finalize')}
+              className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" /> Finalizar clase
+            </button>
+            <button onClick={onClose} className="mt-2 w-full text-slate-500 text-sm font-semibold py-2">
+              Cerrar
+            </button>
+          </>
+        )}
+
+        {mode === 'finalize' && (
+          <>
+            <div className="text-[13px] font-bold flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-brand-600" /> Finalizar clase
+            </div>
+            <div className="text-[10px] font-bold text-slate-400 mt-3 mb-1">NOTAS DE HOY (unas líneas)</div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={5}
+              placeholder="Hoy: saludos, verbo être (je suis / tu es)… Necesita practicar preguntas."
+              className="w-full rounded-xl bg-slate-50 ring-1 ring-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"
+            />
+            {error && (
+              <div className="mt-2 rounded-xl bg-coral-50 ring-1 ring-coral-200 text-coral-600 text-[13px] px-3 py-2">
+                {error}
+              </div>
+            )}
+            <button
+              onClick={generar}
+              disabled={generating || !notes.trim()}
+              className="mt-3 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" /> {generating ? 'Generando…' : 'Generar material (IA)'}
+            </button>
+            <div className="text-center text-[10px] text-slate-400 mt-1">
+              La IA prepara resumen, ejercicios, flashcards y deberes
+            </div>
+          </>
+        )}
+
+        {mode === 'material' && (
+          <>
+            <div className="rounded-xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-[13px] p-2.5 mb-3 font-semibold flex items-center gap-1.5">
+              <Check className="w-4 h-4" /> Material generado y enviado a {student.name}
+            </div>
+            <MaterialView material={material} />
+            <button onClick={onClose} className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3">
+              Hecho
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
