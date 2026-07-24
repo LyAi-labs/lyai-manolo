@@ -1,7 +1,32 @@
 from .database import SessionLocal
-from .models import User, ClassType, Availability, Lesson, Booking
+from .models import User, ClassType, Availability, Lesson, Booking, Vocab
 from .auth import hash_password
 from .config import settings
+from .curriculum import CURRICULUM
+
+
+def run_curriculum_seed():
+    """Siembra la biblioteca con el currículo A1–A2 (24 unidades) + vocabulario.
+    Idempotente: solo reescribe si el nº de lecciones no coincide."""
+    db = SessionLocal()
+    try:
+        if db.query(Lesson).count() == len(CURRICULUM):
+            return
+        db.query(Vocab).delete()
+        db.query(Lesson).delete()
+        db.flush()
+        for u in CURRICULUM:
+            lesson = Lesson(
+                title=u["title"], level=u["level"], type=u["type"],
+                meta=u["meta"], progress=0, locked=False,
+            )
+            db.add(lesson)
+            db.flush()
+            for i, (fr, es) in enumerate(u.get("vocab", [])):
+                db.add(Vocab(lesson_id=lesson.id, fr=fr, es=es, idx=i))
+        db.commit()
+    finally:
+        db.close()
 
 
 def run_seed():

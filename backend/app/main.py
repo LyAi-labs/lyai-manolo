@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 
 from .database import Base, engine
-from .seed import run_seed
+from .seed import run_seed, run_curriculum_seed
 from .routers import auth, catalog, bookings, admin
 
 app = FastAPI(title="Aula Francés API", version="0.1.0")
@@ -29,6 +29,7 @@ def on_startup():
         except OperationalError:
             time.sleep(2)
     run_seed()
+    run_curriculum_seed()
 
 
 app.include_router(auth.router, prefix="/api")

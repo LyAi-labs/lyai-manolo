@@ -62,3 +62,12 @@ class Booking(Base):
 
     user = relationship("User")
     class_type = relationship("ClassType")
+
+
+class Vocab(Base):
+    __tablename__ = "vocab"
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"))
+    fr = Column(String)   # palabra/expresión en francés
+    es = Column(String)   # traducción en español
+    idx = Column(Integer, default=0)

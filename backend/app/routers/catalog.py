@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import ClassType, Availability, Lesson
+from ..models import ClassType, Availability, Lesson, Vocab
 from ..schemas import ClassTypeOut, LessonOut
+from ..curriculum import audio_slug
 from ..config import settings
 
 router = APIRouter(tags=["catalog"])
@@ -28,6 +29,15 @@ def lessons(level: Optional[str] = None, db: Session = Depends(get_db)):
     if level and level != "Todos":
         q = q.filter(Lesson.level == level)
     return q.all()
+
+
+@router.get("/lessons/{lesson_id}/vocab")
+def lesson_vocab(lesson_id: int, db: Session = Depends(get_db)):
+    rows = db.query(Vocab).filter(Vocab.lesson_id == lesson_id).order_by(Vocab.idx).all()
+    return [
+        {"fr": v.fr, "es": v.es, "audio": f"/audio/vocab/{audio_slug(v.fr)}.ogg"}
+        for v in rows
+    ]
 
 
 @router.get("/aula/{aula_id}")
