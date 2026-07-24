@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import { RequireAuth, RequireAdmin } from './components/RequireAuth'
+import Login from './pages/Login'
 import Home from './pages/Home'
 import Reservar from './pages/Reservar'
 import Biblioteca from './pages/Biblioteca'
@@ -10,15 +12,24 @@ import Aula from './pages/Aula'
 export default function App() {
   return (
     <Routes>
-      {/* El aula es pantalla completa (sin layout de navegación) */}
-      <Route path="/aula/:id" element={<Aula />} />
+      <Route path="/login" element={<Login />} />
 
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/reservar" element={<Reservar />} />
-        <Route path="/biblioteca" element={<Biblioteca />} />
-        <Route path="/panel" element={<MiPanel />} />
-        <Route path="/profe" element={<PanelManolo />} />
+      {/* Todo lo demás requiere sesión */}
+      <Route element={<RequireAuth />}>
+        {/* El aula es pantalla completa (sin layout de navegación) */}
+        <Route path="/aula/:id" element={<Aula />} />
+
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/reservar" element={<Reservar />} />
+          <Route path="/biblioteca" element={<Biblioteca />} />
+          <Route path="/panel" element={<MiPanel />} />
+
+          {/* Solo profesor/admin */}
+          <Route element={<RequireAdmin />}>
+            <Route path="/profe" element={<PanelManolo />} />
+          </Route>
+        </Route>
       </Route>
     </Routes>
   )

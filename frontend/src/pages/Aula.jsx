@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { JitsiMeeting } from '@jitsi/react-sdk'
 import { PhoneOff, FolderOpen, Play, FileText, Layers, PencilRuler, CheckCheck } from 'lucide-react'
-import { getAula, getMe } from '../lib/api'
+import { getAula } from '../lib/api'
+import { useAuth } from '../auth/AuthContext'
 
 const kindStyle = {
   audio: { icon: Play, c: 'text-coral-400 bg-coral-500/20' },
@@ -12,12 +13,11 @@ const kindStyle = {
 
 export default function Aula() {
   const { id } = useParams()
+  const { user } = useAuth()
   const [data, setData] = useState(null)
-  const [name, setName] = useState('')
 
   useEffect(() => {
     getAula(id).then(setData).catch(() => {})
-    getMe().then((me) => setName(me?.name || '')).catch(() => {})
   }, [id])
 
   const room = data?.room || `AulaFrancesManolo-${id || 'demo'}`
@@ -57,7 +57,7 @@ export default function Aula() {
               SHOW_JITSI_WATERMARK: false,
               SHOW_CHROME_EXTENSION_BANNER: false,
             }}
-            userInfo={{ displayName: name }}
+            userInfo={{ displayName: user?.name || '' }}
             getIFrameRef={(node) => {
               node.style.height = '100%'
               node.style.width = '100%'

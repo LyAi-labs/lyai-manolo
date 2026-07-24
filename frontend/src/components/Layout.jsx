@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { Home, CalendarPlus, Library, User, Shield } from 'lucide-react'
-import { getMe } from '../lib/api'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Home, CalendarPlus, Library, User, Shield, LogOut } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
 
 const nav = [
   { to: '/', label: 'Inicio', icon: Home, end: true },
@@ -10,12 +9,18 @@ const nav = [
   { to: '/panel', label: 'Mi panel', icon: User },
 ]
 
+const ADMIN_ROLES = ['admin', 'teacher']
+
 export default function Layout() {
-  const [me, setMe] = useState(null)
-  useEffect(() => {
-    getMe().then(setMe).catch(() => {})
-  }, [])
-  const initial = me?.name?.charAt(0) || 'A'
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const isAdmin = ADMIN_ROLES.includes(user?.role)
+  const initial = user?.name?.charAt(0) || 'A'
+
+  function doLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -39,19 +44,39 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <NavLink
-          to="/profe"
-          className="mt-auto flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-50"
-        >
-          <Shield className="w-4 h-4" /> Modo profesor
-        </NavLink>
+
+        <div className="mt-auto space-y-1">
+          {isAdmin && (
+            <NavLink
+              to="/profe"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 rounded-xl text-xs ${
+                  isActive ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-400 hover:bg-slate-50'
+                }`
+              }
+            >
+              <Shield className="w-4 h-4" /> Modo profesor
+            </NavLink>
+          )}
+          <button
+            onClick={doLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-50"
+          >
+            <LogOut className="w-4 h-4" /> Salir ({user?.name})
+          </button>
+        </div>
       </aside>
 
       {/* Top bar (móvil) */}
       <header className="lg:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100 flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2 font-extrabold">🇫🇷 Aula Francés</div>
-        <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
-          {initial}
+        <div className="flex items-center gap-3">
+          <button onClick={doLogout} className="text-slate-400" aria-label="Salir">
+            <LogOut className="w-5 h-5" />
+          </button>
+          <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
+            {initial}
+          </div>
         </div>
       </header>
 

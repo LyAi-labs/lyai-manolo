@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Radio, Video, Calendar, Check, Clock } from 'lucide-react'
-import { getMe, getBookings } from '../lib/api'
+import { getBookings } from '../lib/api'
+import { useAuth } from '../auth/AuthContext'
 
 export default function MiPanel() {
-  const [me, setMe] = useState(null)
+  const { user: me } = useAuth()
   const [bookings, setBookings] = useState([])
 
   useEffect(() => {
-    getMe().then(setMe).catch(() => {})
     getBookings().then(setBookings).catch(() => {})
   }, [])
 

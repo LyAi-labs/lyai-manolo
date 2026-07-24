@@ -1,81 +1,61 @@
-// Cliente del backend (FastAPI en /api).
-// Demo: auto-login del alumno (Lucía) y del profesor (Manolo) para evitar
-// un muro de login. La pantalla de login real vendrá en otra iteración.
+// Cliente del backend (FastAPI en /api) con sesión real (JWT).
 
 const BASE = '/api'
+const TOKEN_KEY = 'af_token'
 
-const DEMO_STUDENT = { email: 'lucia@demo.fr', password: 'demo1234' }
-const DEMO_ADMIN = { email: 'manolo@aula.fr', password: 'manolo1234' }
+export const getToken = () => localStorage.getItem(TOKEN_KEY)
+const setToken = (t) => localStorage.setItem(TOKEN_KEY, t)
+export const logout = () => localStorage.removeItem(TOKEN_KEY)
 
-let studentToken = localStorage.getItem('af_student_token') || null
-let adminToken = localStorage.getItem('af_admin_token') || null
+const authHeaders = () => {
+  const t = getToken()
+  return t ? { Authorization: `Bearer ${t}` } : {}
+}
 
-async function post(path, body, token) {
+async function handle(res, path) {
+  if (res.status === 401) {
+    // Sesión caducada/ inválida → fuera y a login.
+    logout()
+    if (!location.hash.startsWith('#/login')) location.hash = '#/login'
+    throw new Error('Sesión expirada')
+  }
+  if (!res.ok) throw new Error(`${res.status} ${path}`)
+  return res.json()
+}
+
+async function get(path) {
+  return handle(await fetch(BASE + path, { headers: authHeaders() }), path)
+}
+
+async function post(path, body) {
   const res = await fetch(BASE + path, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`)
-  return res.json()
+  return handle(res, path)
 }
 
-async function get(path, token) {
-  const res = await fetch(BASE + path, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+export async function login(email, password) {
+  // El login no lleva token; un 401 aquí = credenciales malas (sin redirect).
+  const res = await fetch(BASE + '/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
   })
-  if (!res.ok) throw new Error(`GET ${path} → ${res.status}`)
-  return res.json()
+  if (res.status === 401) throw new Error('Credenciales inválidas')
+  if (!res.ok) throw new Error('No se pudo iniciar sesión')
+  const data = await res.json()
+  setToken(data.access_token)
+  return data.user
 }
 
-async function ensureStudent() {
-  if (studentToken) return studentToken
-  const data = await post('/auth/login', DEMO_STUDENT)
-  studentToken = data.access_token
-  localStorage.setItem('af_student_token', studentToken)
-  return studentToken
-}
-
-async function ensureAdmin() {
-  if (adminToken) return adminToken
-  const data = await post('/auth/login', DEMO_ADMIN)
-  adminToken = data.access_token
-  localStorage.setItem('af_admin_token', adminToken)
-  return adminToken
-}
-
-// Cache del perfil (una sola llamada compartida entre componentes)
-let mePromise = null
-export function getMe() {
-  if (!mePromise) mePromise = ensureStudent().then((t) => get('/auth/me', t))
-  return mePromise
-}
-
+export const me = () => get('/auth/me')
 export const getClassTypes = () => get('/class-types')
-export const getAvailability = (date) =>
-  get('/availability' + (date ? `?date=${date}` : ''))
+export const getAvailability = (date) => get('/availability' + (date ? `?date=${date}` : ''))
 export const getLessons = () => get('/lessons')
 export const getAula = (id) => get(`/aula/${id}`)
-
-export async function getBookings() {
-  const t = await ensureStudent()
-  return get('/bookings', t)
-}
-
-export async function createBooking(payload) {
-  const t = await ensureStudent()
-  return post('/bookings', payload, t)
-}
-
-export async function getAdminToday() {
-  const t = await ensureAdmin()
-  return get('/admin/today', t)
-}
-
-export async function getAdminStats() {
-  const t = await ensureAdmin()
-  return get('/admin/stats', t)
-}
+export const getBookings = () => get('/bookings')
+export const createBooking = (payload) => post('/bookings', payload)
+export const getAdminToday = () => get('/admin/today')
+export const getAdminStats = () => get('/admin/stats')

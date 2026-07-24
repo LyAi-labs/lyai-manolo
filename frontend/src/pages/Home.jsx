@@ -1,13 +1,9 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarPlus, Video, Library, Award, TrendingUp, Radio } from 'lucide-react'
-import { getMe } from '../lib/api'
+import { useAuth } from '../auth/AuthContext'
 
 export default function Home() {
-  const [me, setMe] = useState(null)
-  useEffect(() => {
-    getMe().then(setMe).catch(() => {})
-  }, [])
+  const { user: me } = useAuth()
 
   return (
     <div className="max-w-5xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
