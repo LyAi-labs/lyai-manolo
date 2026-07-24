@@ -1,13 +1,19 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarPlus, Video, Library, Award, TrendingUp, Radio } from 'lucide-react'
-import { student } from '../data/mock'
+import { getMe } from '../lib/api'
 
 export default function Home() {
+  const [me, setMe] = useState(null)
+  useEffect(() => {
+    getMe().then(setMe).catch(() => {})
+  }, [])
+
   return (
     <div className="max-w-5xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand-600">Bonjour, {student.name} 👋</p>
+          <p className="text-sm font-semibold text-brand-600">Bonjour, {me?.name || '…'} 👋</p>
           <h1 className="mt-1 text-3xl lg:text-4xl font-black tracking-tight">
             Aprende francés con <span className="text-brand-600">Manolo</span>
           </h1>
@@ -50,7 +56,7 @@ export default function Home() {
             <span
               key={l}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg ${
-                l === student.level ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'
+                l === me?.level ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'
               }`}
             >
               {l}

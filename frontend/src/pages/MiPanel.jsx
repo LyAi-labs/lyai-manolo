@@ -1,15 +1,29 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Radio, Video, Calendar, Check, Clock } from 'lucide-react'
-import { student, upcomingClasses, pastClasses } from '../data/mock'
+import { getMe, getBookings } from '../lib/api'
 
 export default function MiPanel() {
+  const [me, setMe] = useState(null)
+  const [bookings, setBookings] = useState([])
+
+  useEffect(() => {
+    getMe().then(setMe).catch(() => {})
+    getBookings().then(setBookings).catch(() => {})
+  }, [])
+
+  const upcoming = bookings.filter((b) => b.status !== 'completed')
+  const past = bookings.filter((b) => b.status === 'completed')
+
   return (
     <div className="max-w-3xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl lg:text-3xl font-black">Hola, {student.name}</h1>
-        <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand-100 text-brand-700">
-          Nivel {student.level}
-        </span>
+        <h1 className="text-2xl lg:text-3xl font-black">Hola, {me?.name || '…'}</h1>
+        {me?.level && (
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand-100 text-brand-700">
+            Nivel {me.level}
+          </span>
+        )}
       </div>
 
       {/* Próxima clase */}
@@ -32,16 +46,16 @@ export default function MiPanel() {
 
       {/* Stats */}
       <div className="mt-4 grid grid-cols-3 gap-2 lg:gap-3 text-center">
-        <Stat value={`🔥${student.streak}`} label="días racha" color="text-coral-500" />
-        <Stat value={student.lessons} label="lecciones" color="text-brand-600" />
-        <Stat value={`${student.hours}h`} label="en vivo" color="text-emerald-500" />
+        <Stat value={`🔥${me?.streak ?? 0}`} label="días racha" color="text-coral-500" />
+        <Stat value={me?.lessons_done ?? 0} label="lecciones" color="text-brand-600" />
+        <Stat value={`${me?.hours ?? 0}h`} label="en vivo" color="text-emerald-500" />
       </div>
 
       {/* Reservas */}
       <div className="mt-6">
         <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Mis reservas</div>
         <div className="space-y-2">
-          {upcomingClasses.map((c) => (
+          {upcoming.map((c) => (
             <div key={c.id} className="rounded-xl bg-white ring-1 ring-slate-100 p-3 flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-brand-50 grid place-items-center">
                 <Calendar className="w-4 h-4 text-brand-600" />
@@ -65,7 +79,7 @@ export default function MiPanel() {
               )}
             </div>
           ))}
-          {pastClasses.map((c) => (
+          {past.map((c) => (
             <div
               key={c.id}
               className="rounded-xl bg-white ring-1 ring-slate-100 p-3 flex items-center gap-3 opacity-70"

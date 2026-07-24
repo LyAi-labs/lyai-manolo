@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { JitsiMeeting } from '@jitsi/react-sdk'
 import { PhoneOff, FolderOpen, Play, FileText, Layers, PencilRuler, CheckCheck } from 'lucide-react'
-import { aulaResources, student } from '../data/mock'
+import { getAula, getMe } from '../lib/api'
 
 const kindStyle = {
   audio: { icon: Play, c: 'text-coral-400 bg-coral-500/20' },
@@ -11,7 +12,16 @@ const kindStyle = {
 
 export default function Aula() {
   const { id } = useParams()
-  const room = `AulaFrancesManolo-${id || 'demo'}`
+  const [data, setData] = useState(null)
+  const [name, setName] = useState('')
+
+  useEffect(() => {
+    getAula(id).then(setData).catch(() => {})
+    getMe().then((me) => setName(me?.name || '')).catch(() => {})
+  }, [id])
+
+  const room = data?.room || `AulaFrancesManolo-${id || 'demo'}`
+  const resources = data?.resources || []
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white">
@@ -19,7 +29,7 @@ export default function Aula() {
       <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="font-semibold text-sm">Conversación A2 · con Manolo</span>
+          <span className="font-semibold text-sm">{data?.title || 'Conversación A2 · con Manolo'}</span>
         </div>
         <Link
           to="/panel"
@@ -47,7 +57,7 @@ export default function Aula() {
               SHOW_JITSI_WATERMARK: false,
               SHOW_CHROME_EXTENSION_BANNER: false,
             }}
-            userInfo={{ displayName: student.name }}
+            userInfo={{ displayName: name }}
             getIFrameRef={(node) => {
               node.style.height = '100%'
               node.style.width = '100%'
@@ -62,7 +72,7 @@ export default function Aula() {
             Recursos de la clase
           </div>
           <div className="space-y-2">
-            {aulaResources.map((r) => {
+            {resources.map((r) => {
               const { icon: Icon, c } = kindStyle[r.kind] || kindStyle.vocab
               return (
                 <div key={r.id} className="flex items-center gap-2.5 rounded-lg bg-white/5 ring-1 ring-white/10 p-2.5">

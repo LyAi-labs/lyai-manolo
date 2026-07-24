@@ -1,16 +1,53 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Info } from 'lucide-react'
-import { classTypes, days, slots, bookedSlots } from '../data/mock'
+import { getClassTypes, getAvailability, createBooking } from '../lib/api'
+
+// El selector de día es visual; el demo trabaja sobre la disponibilidad de hoy.
+const days = [
+  { id: '23', dow: 'MIÉ', d: 23 },
+  { id: '24', dow: 'JUE', d: 24 },
+  { id: '25', dow: 'VIE', d: 25 },
+  { id: '26', dow: 'SÁB', d: 26 },
+  { id: '27', dow: 'DOM', d: 27 },
+]
 
 export default function Reservar() {
-  const [type, setType] = useState('conv')
+  const [classTypes, setClassTypes] = useState([])
+  const [slots, setSlots] = useState([])
+  const [type, setType] = useState(null)
   const [day, setDay] = useState('24')
-  const [slot, setSlot] = useState('17:00')
+  const [slot, setSlot] = useState(null)
+  const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    getClassTypes().then((cts) => {
+      setClassTypes(cts)
+      if (cts.length) setType(cts[0].id)
+    })
+    getAvailability().then((av) => {
+      setSlots(av.slots)
+      const free = av.slots.find((s) => !s.is_booked)
+      if (free) setSlot(free.time)
+    })
+  }, [])
 
   const ct = classTypes.find((c) => c.id === type)
   const dd = days.find((d) => d.id === day)
+
+  async function confirm() {
+    if (!type || !slot) return
+    setSaving(true)
+    try {
+      await createBooking({ class_type_id: type, date: '2026-07-' + day, time: slot })
+      setDone(true)
+    } catch (e) {
+      alert('No se pudo reservar: ' + e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-5 lg:px-10 py-6 lg:py-10 pb-44">
@@ -54,25 +91,22 @@ export default function Reservar() {
 
       <Section title="Horas de Manolo">
         <div className="grid grid-cols-3 gap-2 text-center text-[13px] font-semibold">
-          {slots.map((s) => {
-            const full = bookedSlots.includes(s)
-            return (
-              <button
-                key={s}
-                disabled={full}
-                onClick={() => setSlot(s)}
-                className={`rounded-lg py-2.5 ${
-                  full
-                    ? 'bg-slate-100 text-slate-300 line-through cursor-not-allowed'
-                    : slot === s
-                      ? 'bg-brand-600 text-white ring-2 ring-brand-600'
-                      : 'bg-white ring-1 ring-slate-200 text-slate-700'
-                }`}
-              >
-                {s}
-              </button>
-            )
-          })}
+          {slots.map((s) => (
+            <button
+              key={s.time}
+              disabled={s.is_booked}
+              onClick={() => setSlot(s.time)}
+              className={`rounded-lg py-2.5 ${
+                s.is_booked
+                  ? 'bg-slate-100 text-slate-300 line-through cursor-not-allowed'
+                  : slot === s.time
+                    ? 'bg-brand-600 text-white ring-2 ring-brand-600'
+                    : 'bg-white ring-1 ring-slate-200 text-slate-700'
+              }`}
+            >
+              {s.time}
+            </button>
+          ))}
         </div>
       </Section>
 
@@ -87,14 +121,15 @@ export default function Reservar() {
             <>
               <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3 flex items-center gap-2 text-[12px] text-slate-500 mb-2">
                 <Info className="w-4 h-4 text-brand-600 shrink-0" />
-                {ct.name} · {ct.duration} min · {dd.dow} {dd.d} · {slot} ·{' '}
+                {ct?.name || '…'} · {ct?.duration_min || '—'} min · {dd?.dow} {dd?.d} · {slot || '—'} ·{' '}
                 <b className="text-slate-700">pago tras confirmar</b>
               </div>
               <button
-                onClick={() => setDone(true)}
-                className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 shadow-lg shadow-brand-600/30"
+                onClick={confirm}
+                disabled={saving || !type || !slot}
+                className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 shadow-lg shadow-brand-600/30 disabled:opacity-60"
               >
-                Confirmar reserva
+                {saving ? 'Reservando…' : 'Confirmar reserva'}
               </button>
             </>
           )}

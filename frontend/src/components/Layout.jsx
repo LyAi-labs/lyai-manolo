@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Home, CalendarPlus, Library, User, Shield } from 'lucide-react'
-import { student } from '../data/mock'
+import { getMe } from '../lib/api'
 
 const nav = [
   { to: '/', label: 'Inicio', icon: Home, end: true },
@@ -10,6 +11,12 @@ const nav = [
 ]
 
 export default function Layout() {
+  const [me, setMe] = useState(null)
+  useEffect(() => {
+    getMe().then(setMe).catch(() => {})
+  }, [])
+  const initial = me?.name?.charAt(0) || 'A'
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Sidebar (escritorio) */}
@@ -44,7 +51,7 @@ export default function Layout() {
       <header className="lg:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100 flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2 font-extrabold">🇫🇷 Aula Francés</div>
         <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
-          {student.name.charAt(0)}
+          {initial}
         </div>
       </header>
 

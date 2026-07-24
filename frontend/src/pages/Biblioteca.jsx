@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Play, FileText, Lock, ListChecks } from 'lucide-react'
-import { levels, lessons } from '../data/mock'
+import { getLessons } from '../lib/api'
 
+const levels = ['Todos', 'A1', 'A2', 'B1', 'B2', 'C1']
 const typeIcon = { video: Play, ejercicio: ListChecks, pdf: FileText }
 
 export default function Biblioteca() {
   const [level, setLevel] = useState('Todos')
+  const [lessons, setLessons] = useState([])
+
+  useEffect(() => {
+    getLessons().then(setLessons).catch(() => {})
+  }, [])
+
   const list = lessons.filter((l) => level === 'Todos' || l.level === level)
 
   return (

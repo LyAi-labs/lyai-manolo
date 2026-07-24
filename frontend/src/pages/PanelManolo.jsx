@@ -1,8 +1,17 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarClock, Upload, BadgeCheck, Clock, Plus, Video, ArrowLeft } from 'lucide-react'
-import { teacherStats, todayBookings } from '../data/mock'
+import { getAdminStats, getAdminToday } from '../lib/api'
 
 export default function PanelManolo() {
+  const [stats, setStats] = useState(null)
+  const [today, setToday] = useState([])
+
+  useEffect(() => {
+    getAdminStats().then(setStats).catch(() => {})
+    getAdminToday().then(setToday).catch(() => {})
+  }, [])
+
   return (
     <div className="max-w-3xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
       <div className="flex items-center justify-between">
@@ -16,15 +25,15 @@ export default function PanelManolo() {
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-2 lg:gap-3 text-center">
-        <Stat value={teacherStats.students} label="alumnos" color="text-brand-600" />
-        <Stat value={teacherStats.classesWeek} label="clases/sem" color="text-emerald-500" />
-        <Stat value={teacherStats.materials} label="material" color="text-coral-500" />
+        <Stat value={stats?.students ?? '—'} label="alumnos" color="text-brand-600" />
+        <Stat value={stats?.classesWeek ?? '—'} label="clases/sem" color="text-emerald-500" />
+        <Stat value={stats?.materials ?? '—'} label="material" color="text-coral-500" />
       </div>
 
       <div className="mt-6">
         <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Reservas de hoy</div>
         <div className="space-y-2">
-          {todayBookings.map((b, i) =>
+          {today.map((b, i) =>
             b.status === 'free' ? (
               <div
                 key={i}
