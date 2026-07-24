@@ -5,6 +5,7 @@ from ..database import get_db
 from ..models import Booking, ClassType, User
 from ..schemas import BookingOut, BookingIn
 from ..auth import get_current_user
+from .. import tg
 
 router = APIRouter(tags=["bookings"])
 
@@ -42,7 +43,7 @@ def create_booking(
         date=data.date,
         time=data.time,
         level=user.level,
-        status="confirmed",
+        status="pending",  # nace pendiente → la confirma Manolo (panel o Telegram)
         payment_status="pending",
         room=f"AulaFrancesManolo-{user.id}-{data.date}-{data.time}",
         when_label=f"{data.date} · {data.time}",
@@ -50,4 +51,9 @@ def create_booking(
     db.add(b)
     db.commit()
     db.refresh(b)
+    # Aviso a Manolo con botones Confirmar/Rechazar (no debe romper la reserva).
+    try:
+        tg.notify_new_booking(b, user.name)
+    except Exception:
+        pass
     return _serialize(b)

@@ -12,7 +12,7 @@ export default function MiPanel() {
     getBookings().then(setBookings).catch(() => {})
   }, [])
 
-  const upcoming = bookings.filter((b) => b.status !== 'completed')
+  const upcoming = bookings.filter((b) => b.status !== 'completed' && b.status !== 'rejected')
   const past = bookings.filter((b) => b.status === 'completed')
 
   return (
@@ -66,15 +66,15 @@ export default function MiPanel() {
                 </div>
                 <div className="text-[11px] text-slate-400">{c.when}</div>
               </div>
-              {c.payment === 'paid' ? (
+              {c.status === 'confirmed' ? (
                 <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
                   <Check className="w-3 h-3" />
-                  Pagado
+                  Confirmada
                 </span>
               ) : (
-                <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded flex items-center gap-1">
+                <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded flex items-center gap-1 whitespace-nowrap">
                   <Clock className="w-3 h-3" />
-                  Pago pendiente
+                  Pendiente de Manolo
                 </span>
               )}
             </div>

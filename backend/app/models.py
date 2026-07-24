@@ -56,7 +56,7 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     level = Column(String)
-    status = Column(String, default="confirmed")          # confirmed | completed
+    status = Column(String, default="pending")            # pending | confirmed | rejected | completed
     payment_status = Column(String, default="pending")    # paid | pending
     room = Column(String)
     when_label = Column(String)

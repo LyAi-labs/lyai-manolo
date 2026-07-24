@@ -114,15 +114,15 @@ export default function Reservar() {
       <div className="fixed bottom-16 lg:bottom-0 inset-x-0 lg:left-60 bg-white border-t border-slate-100 p-4 z-20">
         <div className="max-w-2xl mx-auto">
           {done ? (
-            <div className="rounded-xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm p-3 text-center font-semibold">
-              ✓ Reserva registrada — te llegará el enlace de pago (transferencia/Bizum).
+            <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-sm p-3 text-center font-semibold">
+              ✓ Reserva enviada — pendiente de que Manolo la confirme. Te avisamos en cuanto la acepte.
             </div>
           ) : (
             <>
               <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3 flex items-center gap-2 text-[12px] text-slate-500 mb-2">
                 <Info className="w-4 h-4 text-brand-600 shrink-0" />
                 {ct?.name || '…'} · {ct?.duration_min || '—'} min · {dd?.dow} {dd?.d} · {slot || '—'} ·{' '}
-                <b className="text-slate-700">pago tras confirmar</b>
+                <b className="text-slate-700">la confirma Manolo</b>
               </div>
               <button
                 onClick={confirm}

@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 from .database import Base, engine
 from .seed import run_seed, run_curriculum_seed
-from .routers import auth, catalog, bookings, admin
+from .routers import auth, catalog, bookings, admin, telegram
 
 app = FastAPI(title="Aula Francés API", version="0.1.0")
 
@@ -43,6 +43,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(catalog.router, prefix="/api")
 app.include_router(bookings.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(telegram.router, prefix="/api")
 
 
 @app.get("/api/health")

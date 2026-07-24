@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import {
   getAdminStats, getAdminToday, getStudents, createStudent, getStudentProgress, finalizeClass,
+  getPendingBookings, confirmBooking, rejectBooking,
 } from '../lib/api'
 import MaterialView from '../components/MaterialView'
 
@@ -15,6 +16,8 @@ export default function PanelManolo() {
   const [stats, setStats] = useState(null)
   const [today, setToday] = useState([])
   const [students, setStudents] = useState([])
+  const [pending, setPending] = useState([])
+  const [busy, setBusy] = useState(null) // id de la reserva en curso
   const [modalOpen, setModalOpen] = useState(false)
   const [prep, setPrep] = useState(null) // { student, completed, count }
 
@@ -28,11 +31,29 @@ export default function PanelManolo() {
   useEffect(() => {
     getAdminStats().then(setStats).catch(() => {})
     getAdminToday().then(setToday).catch(() => {})
+    refreshPending()
     refreshStudents()
   }, [])
 
   function refreshStudents() {
     getStudents().then(setStudents).catch(() => {})
+  }
+
+  function refreshPending() {
+    getPendingBookings().then(setPending).catch(() => {})
+  }
+
+  async function decide(id, action) {
+    setBusy(id)
+    try {
+      await (action === 'confirm' ? confirmBooking(id) : rejectBooking(id))
+      setPending((list) => list.filter((b) => b.id !== id))
+      getAdminToday().then(setToday).catch(() => {})
+    } catch {
+      /* deja el item; el profe puede reintentar */
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
@@ -52,6 +73,48 @@ export default function PanelManolo() {
         <Stat value={stats?.classesWeek ?? '—'} label="clases/sem" color="text-emerald-500" />
         <Stat value={stats?.materials ?? '—'} label="material" color="text-coral-500" />
       </div>
+
+      {/* Reservas por confirmar */}
+      {pending.length > 0 && (
+        <div className="mt-6">
+          <div className="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Reservas por confirmar
+            <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{pending.length}</span>
+          </div>
+          <div className="space-y-2">
+            {pending.map((b) => (
+              <div key={b.id} className="rounded-xl bg-amber-50 ring-1 ring-amber-200 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="mono text-[13px] font-bold text-slate-500">{b.time}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-bold truncate">{b.student} · {b.type}</div>
+                    <div className="text-[11px] text-slate-400">{b.when}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2.5">
+                  <button
+                    onClick={() => decide(b.id, 'confirm')}
+                    disabled={busy === b.id}
+                    className="flex-1 bg-emerald-600 text-white text-xs font-bold rounded-lg py-2 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {busy === b.id ? '…' : 'Confirmar'}
+                  </button>
+                  <button
+                    onClick={() => decide(b.id, 'reject')}
+                    disabled={busy === b.id}
+                    className="flex-1 bg-white ring-1 ring-slate-300 text-slate-600 text-xs font-bold rounded-lg py-2 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Reservas de hoy */}
       <div className="mt-6">

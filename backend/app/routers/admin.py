@@ -21,6 +21,51 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+# --- Confirmación de reservas (Manolo · panel + Telegram comparten esto) ------
+
+def _booking_row(b: Booking) -> dict:
+    return {
+        "id": b.id,
+        "student": b.user.name if b.user else "—",
+        "type": f"{b.class_type.name} {b.level or ''}".strip() if b.class_type else (b.level or ""),
+        "when": b.when_label or f"{b.date} · {b.time}",
+        "date": b.date,
+        "time": b.time,
+        "status": b.status,
+    }
+
+
+@router.get("/admin/bookings/pending")
+def pending_bookings(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    rows = (
+        db.query(Booking)
+        .filter(Booking.status == "pending")
+        .order_by(Booking.date, Booking.time)
+        .all()
+    )
+    return [_booking_row(b) for b in rows]
+
+
+def _set_status(db: Session, booking_id: int, new_status: str) -> dict:
+    b = db.get(Booking, booking_id)
+    if not b:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    b.status = new_status
+    db.commit()
+    db.refresh(b)
+    return _booking_row(b)
+
+
+@router.post("/admin/bookings/{booking_id}/confirm")
+def confirm_booking(booking_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return _set_status(db, booking_id, "confirmed")
+
+
+@router.post("/admin/bookings/{booking_id}/reject")
+def reject_booking(booking_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return _set_status(db, booking_id, "rejected")
+
+
 @router.post("/admin/classes/finalize")
 def finalize_class(data: FinalizeIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     stu = db.get(User, data.student_id)

@@ -12,5 +12,14 @@ class Settings(BaseSettings):
     # Fecha "hoy" fija para que el demo cuadre con los datos sembrados.
     DEMO_TODAY: str = "2026-07-24"
 
+    # Telegram (bot @LyAipa) — avisos de reserva + confirmación por botón.
+    # El token se lee del fichero montado (single source); los chat_id y el
+    # secreto del webhook llegan por env desde .env.
+    TG_BOT_TOKEN: str = ""
+    TG_BOT_TOKEN_FILE: str = "/run/secrets/tg_bot_token"
+    TG_MANOLO_CHAT_ID: str = ""
+    TG_IGNACIO_CHAT_ID: str = ""
+    TG_WEBHOOK_SECRET: str = ""
+
 
 settings = Settings()

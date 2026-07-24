@@ -28,6 +28,12 @@ services:
       DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@manolo-postgres:5432/${DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      TG_MANOLO_CHAT_ID: ${TG_MANOLO_CHAT_ID}
+      TG_IGNACIO_CHAT_ID: ${TG_IGNACIO_CHAT_ID}
+      TG_WEBHOOK_SECRET: ${TG_WEBHOOK_SECRET}
+    volumes:
+      # Token del bot @LyAipa en solo-lectura (single source con lyai-monitoring).
+      - /opt/lyai/app/lyai-monitoring/tg_bot_token:/run/secrets/tg_bot_token:ro
     depends_on:
       manolo-postgres:
         condition: service_healthy
