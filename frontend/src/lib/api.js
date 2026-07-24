@@ -36,12 +36,12 @@ async function post(path, body) {
   return handle(res, path)
 }
 
-export async function login(email, password) {
+export async function login(identifier, password) {
   // El login no lleva token; un 401 aquí = credenciales malas (sin redirect).
   const res = await fetch(BASE + '/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   })
   if (res.status === 401) throw new Error('Credenciales inválidas')
   if (!res.ok) throw new Error('No se pudo iniciar sesión')

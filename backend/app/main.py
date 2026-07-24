@@ -28,6 +28,13 @@ def on_startup():
             break
         except OperationalError:
             time.sleep(2)
+    # Migración ligera: añadir columna username si la tabla ya existía sin ella.
+    try:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR"))
+    except Exception:
+        pass
     run_seed()
     run_curriculum_seed()
 

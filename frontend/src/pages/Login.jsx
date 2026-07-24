@@ -8,7 +8,7 @@ const ADMIN_ROLES = ['admin', 'teacher']
 export default function Login() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,7 +21,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const u = await login(email.trim(), password)
+      const u = await login(identifier.trim(), password)
       navigate(ADMIN_ROLES.includes(u.role) ? '/profe' : '/', { replace: true })
     } catch (err) {
       setError(err.message || 'No se pudo entrar')
@@ -41,14 +41,16 @@ export default function Login() {
 
         <div className="mt-6 space-y-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-500">Email</label>
+            <label className="text-[11px] font-semibold text-slate-500">Email o usuario</label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-1 w-full rounded-xl bg-white ring-1 ring-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="tucorreo@ejemplo.com"
+              placeholder="manolo  ·  o  tucorreo@ejemplo.com"
             />
           </div>
           <div>

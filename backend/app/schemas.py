@@ -6,6 +6,7 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     email: str
+    username: Optional[str] = None
     name: str
     role: str
     level: Optional[str] = None
@@ -15,7 +16,7 @@ class UserOut(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: str
+    identifier: str  # email o nombre de usuario
     password: str
 
 
