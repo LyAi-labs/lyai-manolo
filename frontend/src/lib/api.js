@@ -36,6 +36,15 @@ async function post(path, body) {
   return handle(res, path)
 }
 
+async function patch(path, body) {
+  const res = await fetch(BASE + path, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  })
+  return handle(res, path)
+}
+
 export async function login(identifier, password) {
   // El login no lleva token; un 401 aquí = credenciales malas (sin redirect).
   const res = await fetch(BASE + '/auth/login', {
@@ -43,12 +52,15 @@ export async function login(identifier, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identifier, password }),
   })
-  if (res.status === 401) throw new Error('Credenciales inválidas')
-  if (!res.ok) throw new Error('No se pudo iniciar sesión')
+  // Códigos (no texto) → la UI los traduce con i18n.
+  if (res.status === 401) throw new Error('invalid_credentials')
+  if (!res.ok) throw new Error('login_failed')
   const data = await res.json()
   setToken(data.access_token)
   return data.user
 }
+
+export const updateLang = (lang) => patch('/me/lang', { lang })
 
 export const me = () => get('/auth/me')
 export const getClassTypes = () => get('/class-types')

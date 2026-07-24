@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarPlus, Video, Library, Award, TrendingUp, Radio, BookOpen, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
 import { getHomework } from '../lib/api'
 import MaterialView from '../components/MaterialView'
 
 export default function Home() {
+  const { t } = useTranslation()
   const { user: me } = useAuth()
   const [hw, setHw] = useState(null)
   const [showHw, setShowHw] = useState(false)
@@ -18,18 +20,18 @@ export default function Home() {
     <div className="max-w-5xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand-600">Bonjour, {me?.name || '…'} 👋</p>
+          <p className="text-sm font-semibold text-brand-600">{t('home.greeting', { name: me?.name || '…' })}</p>
           <h1 className="mt-1 text-3xl lg:text-4xl font-black tracking-tight">
-            Aprende francés con <span className="text-brand-600">Manolo</span>
+            {t('home.titleLead')} <span className="text-brand-600">Manolo</span>
           </h1>
-          <p className="mt-2 text-slate-500">Clases en vivo 1-a-1 y biblioteca a tu ritmo · A1–C1</p>
+          <p className="mt-2 text-slate-500">{t('home.subtitle')}</p>
         </div>
         <Link
           to="/reservar"
           className="inline-flex items-center justify-center gap-2 bg-brand-600 text-white text-sm font-semibold rounded-xl px-5 py-3 shadow-lg shadow-brand-600/30 shrink-0"
         >
           <CalendarPlus className="w-4 h-4" />
-          Reservar clase
+          {t('home.reservar')}
         </Link>
       </div>
 
@@ -41,15 +43,13 @@ export default function Home() {
         <div>
           <div className="text-[11px] font-semibold text-brand-200 flex items-center gap-1.5">
             <Radio className="w-3.5 h-3.5" />
-            PRÓXIMA CLASE · HOY 17:00
+            {t('home.nextTag')}
           </div>
-          <div className="mt-1 text-lg lg:text-xl font-bold">
-            Conversación con Manolo · empieza en 2 h 14 min
-          </div>
+          <div className="mt-1 text-lg lg:text-xl font-bold">{t('home.nextTitle')}</div>
         </div>
         <span className="mt-3 lg:mt-0 inline-flex items-center gap-2 bg-white text-brand-700 text-sm font-bold rounded-xl px-5 py-2.5">
           <Video className="w-4 h-4" />
-          Entrar al aula
+          {t('common.enterAula')}
         </span>
       </Link>
 
@@ -63,17 +63,17 @@ export default function Home() {
             <BookOpen className="w-5 h-5 text-amber-500" />
           </div>
           <div className="flex-1">
-            <div className="text-[10px] font-bold text-slate-400">DESPUÉS DE LA CLASE</div>
-            <div className="text-[14px] font-bold">Tus deberes · de Manolo</div>
-            <div className="text-[11px] text-amber-600">Material listo — toca para verlo</div>
+            <div className="text-[10px] font-bold text-slate-400">{t('home.afterClass')}</div>
+            <div className="text-[14px] font-bold">{t('home.homework')}</div>
+            <div className="text-[11px] text-amber-600">{t('home.homeworkReady')}</div>
           </div>
-          <span className="text-brand-600 text-sm font-bold shrink-0">Ver →</span>
+          <span className="text-brand-600 text-sm font-bold shrink-0">{t('home.see')}</span>
         </button>
       )}
 
       {/* Niveles */}
       <div className="mt-6">
-        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Tu nivel</div>
+        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{t('home.yourLevel')}</div>
         <div className="mt-2 flex gap-1.5">
           {['A1', 'A2', 'B1', 'B2', 'C1'].map((l) => (
             <span
@@ -90,10 +90,10 @@ export default function Home() {
 
       {/* Accesos */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <Feature to="/reservar" icon={Video} title="Clases en vivo" sub="Aula Jitsi 1-a-1" primary />
-        <Feature to="/biblioteca" icon={Library} title="Biblioteca" sub="Lecciones + ejercicios" />
-        <Feature to="/biblioteca" icon={Award} title="Prep DELF" sub="Simulacros" />
-        <Feature to="/panel" icon={TrendingUp} title="Progreso" sub="Racha y logros" />
+        <Feature to="/reservar" icon={Video} title={t('home.featLiveTitle')} sub={t('home.featLiveSub')} primary />
+        <Feature to="/biblioteca" icon={Library} title={t('home.featLibTitle')} sub={t('home.featLibSub')} />
+        <Feature to="/biblioteca" icon={Award} title={t('home.featDelfTitle')} sub={t('home.featDelfSub')} />
+        <Feature to="/panel" icon={TrendingUp} title={t('home.featProgTitle')} sub={t('home.featProgSub')} />
       </div>
 
       {showHw && hw?.has && (
@@ -101,7 +101,7 @@ export default function Home() {
           <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <div className="font-extrabold text-lg flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-brand-600" /> Tus deberes
+                <BookOpen className="w-5 h-5 text-brand-600" /> {t('home.homeworkTitle')}
               </div>
               <button onClick={() => setShowHw(false)} className="text-slate-400">
                 <X className="w-5 h-5" />
@@ -112,7 +112,7 @@ export default function Home() {
               onClick={() => setShowHw(false)}
               className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3"
             >
-              Cerrar
+              {t('common.close')}
             </button>
           </div>
         </div>

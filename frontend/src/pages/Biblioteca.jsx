@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Play, FileText, Lock, ListChecks } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getLessons, getMyProgress } from '../lib/api'
 
 const levels = ['Todos', 'A1', 'A2', 'B1', 'B2', 'C1']
 const typeIcon = { video: Play, ejercicio: ListChecks, pdf: FileText }
 
 export default function Biblioteca() {
+  const { t } = useTranslation()
   const [level, setLevel] = useState('Todos')
   const [lessons, setLessons] = useState([])
   const [completed, setCompleted] = useState(new Set())
@@ -20,7 +22,7 @@ export default function Biblioteca() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 lg:px-10 py-6 lg:py-10">
-      <h1 className="text-2xl lg:text-3xl font-black">Biblioteca</h1>
+      <h1 className="text-2xl lg:text-3xl font-black">{t('biblioteca.title')}</h1>
 
       <div className="mt-4 flex gap-2 overflow-x-auto scroll pb-1">
         {levels.map((l) => (
@@ -31,7 +33,7 @@ export default function Biblioteca() {
               level === l ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-500'
             }`}
           >
-            {l}
+            {l === 'Todos' ? t('biblioteca.all') : l}
           </button>
         ))}
       </div>
@@ -61,7 +63,7 @@ export default function Biblioteca() {
               ) : doneL ? (
                 <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
                   <Check className="w-3 h-3" />
-                  Hecho
+                  {t('biblioteca.done')}
                 </span>
               ) : null}
             </div>

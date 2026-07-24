@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
+import LangSwitch from '../components/LangSwitch'
 
 const ADMIN_ROLES = ['admin', 'teacher']
 
 export default function Login() {
+  const { t } = useTranslation()
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
@@ -24,7 +27,7 @@ export default function Login() {
       const u = await login(identifier.trim(), password)
       navigate(ADMIN_ROLES.includes(u.role) ? '/profe' : '/', { replace: true })
     } catch (err) {
-      setError(err.message || 'No se pudo entrar')
+      setError(err.message === 'invalid_credentials' ? t('login.invalidCreds') : t('login.failed'))
     } finally {
       setLoading(false)
     }
@@ -32,16 +35,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-50 grid place-items-center px-6">
+      <div className="absolute top-4 right-4">
+        <LangSwitch />
+      </div>
       <form onSubmit={submit} className="w-full max-w-sm">
         <div className="text-center">
           <div className="text-5xl">🇫🇷</div>
           <h1 className="mt-2 text-2xl font-black">Aula Francés</h1>
-          <p className="mt-1 text-sm text-slate-500">Entra a tu cuenta</p>
+          <p className="mt-1 text-sm text-slate-500">{t('login.subtitle')}</p>
         </div>
 
         <div className="mt-6 space-y-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-500">Email o usuario</label>
+            <label className="text-[11px] font-semibold text-slate-500">{t('login.idLabel')}</label>
             <input
               type="text"
               required
@@ -50,11 +56,11 @@ export default function Login() {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               className="mt-1 w-full rounded-xl bg-white ring-1 ring-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="manolo  ·  o  tucorreo@ejemplo.com"
+              placeholder={t('login.idPlaceholder')}
             />
           </div>
           <div>
-            <label className="text-[11px] font-semibold text-slate-500">Contraseña</label>
+            <label className="text-[11px] font-semibold text-slate-500">{t('login.password')}</label>
             <input
               type="password"
               required
@@ -76,9 +82,9 @@ export default function Login() {
             className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 shadow-lg shadow-brand-600/30 disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <LogIn className="w-4 h-4" />
-            {loading ? 'Entrando…' : 'Entrar'}
+            {loading ? t('login.entering') : t('login.enter')}
           </button>
-          <p className="text-center text-[11px] text-slate-400">¿Sin cuenta? Escríbele a Manolo.</p>
+          <p className="text-center text-[11px] text-slate-400">{t('login.noAccount')}</p>
         </div>
       </form>
     </div>

@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Play, Pause, Volume2, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getLesson, getVocab, getMyProgress, completeLesson } from '../lib/api'
 
-const TYPE_LABEL = { video: 'Vídeo', ejercicio: 'Ejercicio', pdf: 'PDF' }
+const STEPS = ['leccion.stepGram', 'leccion.stepDialog', 'leccion.stepEx', 'leccion.stepTest']
 
 export default function Leccion() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [lesson, setLesson] = useState(null)
   const [vocab, setVocab] = useState([])
   const [playing, setPlaying] = useState(null) // índice en reproducción
   const [done, setDone] = useState(false)
   const audioRef = useRef(null)
+
+  const typeLabel = (ty) =>
+    ({ video: t('leccion.typeVideo'), ejercicio: t('leccion.typeExercise'), pdf: t('leccion.typePdf') }[ty] || ty)
 
   useEffect(() => {
     getLesson(id).then(setLesson).catch(() => {})
@@ -56,11 +61,11 @@ export default function Leccion() {
 
       {/* Preparación */}
       <div className="mt-4 rounded-xl bg-white ring-1 ring-slate-100 p-4">
-        <div className="text-[10px] font-bold text-slate-400">PREPARACIÓN</div>
+        <div className="text-[10px] font-bold text-slate-400">{t('leccion.prep')}</div>
         <div className="text-[14px] font-semibold mt-0.5">{lesson?.meta || '…'}</div>
         {lesson && (
           <div className="text-[11px] text-slate-400 mt-0.5">
-            {TYPE_LABEL[lesson.type] || lesson.type} · nivel {lesson.level}
+            {t('leccion.typeLevel', { type: typeLabel(lesson.type), level: lesson.level })}
           </div>
         )}
       </div>
@@ -69,14 +74,14 @@ export default function Leccion() {
       {vocab.length > 0 ? (
         <div className="mt-6">
           <div className="text-[10px] font-bold text-slate-400 mb-2 flex items-center gap-1.5">
-            <Volume2 className="w-3.5 h-3.5" /> VOCABULARIO · voz Kore
+            <Volume2 className="w-3.5 h-3.5" /> {t('leccion.vocabTitle')}
           </div>
           <div className="space-y-2">
             {vocab.map((v, i) => (
               <div key={i} className="rounded-xl bg-white ring-1 ring-slate-100 p-2.5 flex items-center gap-3">
                 <button
                   onClick={() => play(i, v.audio)}
-                  aria-label={`Escuchar ${v.fr}`}
+                  aria-label={t('leccion.listen', { word: v.fr })}
                   className={`w-10 h-10 rounded-full grid place-items-center shrink-0 text-white ${
                     playing === i ? 'bg-brand-700' : 'bg-brand-600'
                   }`}
@@ -93,15 +98,15 @@ export default function Leccion() {
         </div>
       ) : (
         <div className="mt-6 rounded-xl ring-1 ring-dashed ring-slate-200 p-4 text-[13px] text-slate-400 text-center">
-          Vocabulario y audio en preparación para esta unidad.
+          {t('leccion.vocabPrep')}
         </div>
       )}
 
       {/* Próximos pasos del centro de estudio */}
       <div className="mt-5 flex flex-wrap gap-1.5">
-        {['Gramática', 'Diálogo', 'Ejercicios', 'Mini test'].map((s) => (
+        {STEPS.map((s) => (
           <span key={s} className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-400">
-            {s} · pronto
+            {t('leccion.soon', { step: t(s) })}
           </span>
         ))}
       </div>
@@ -111,14 +116,14 @@ export default function Leccion() {
         <div className="max-w-2xl mx-auto">
           {done ? (
             <div className="rounded-xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 text-sm p-3 text-center font-semibold flex items-center justify-center gap-2">
-              <Check className="w-4 h-4" /> ¡Lección completada! Manolo lo verá.
+              <Check className="w-4 h-4" /> {t('leccion.completedMsg')}
             </div>
           ) : (
             <button
               onClick={marcarCompletada}
               className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3"
             >
-              Marcar como completada
+              {t('leccion.markComplete')}
             </button>
           )}
         </div>

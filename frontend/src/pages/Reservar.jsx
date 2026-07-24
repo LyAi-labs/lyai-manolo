@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Info } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getClassTypes, getAvailability, createBooking } from '../lib/api'
+import { localizeClassType } from '../i18n/labels'
 
 // El selector de día es visual; el demo trabaja sobre la disponibilidad de hoy.
 const days = [
-  { id: '23', dow: 'MIÉ', d: 23 },
-  { id: '24', dow: 'JUE', d: 24 },
-  { id: '25', dow: 'VIE', d: 25 },
-  { id: '26', dow: 'SÁB', d: 26 },
-  { id: '27', dow: 'DOM', d: 27 },
+  { id: '23', dowKey: 'reservar.dowWed', d: 23 },
+  { id: '24', dowKey: 'reservar.dowThu', d: 24 },
+  { id: '25', dowKey: 'reservar.dowFri', d: 25 },
+  { id: '26', dowKey: 'reservar.dowSat', d: 26 },
+  { id: '27', dowKey: 'reservar.dowSun', d: 27 },
 ]
 
 export default function Reservar() {
+  const { t, i18n } = useTranslation()
   const [classTypes, setClassTypes] = useState([])
   const [slots, setSlots] = useState([])
   const [type, setType] = useState(null)
@@ -43,7 +46,7 @@ export default function Reservar() {
       await createBooking({ class_type_id: type, date: '2026-07-' + day, time: slot })
       setDone(true)
     } catch (e) {
-      alert('No se pudo reservar: ' + e.message)
+      alert(t('reservar.error', { msg: e.message }))
     } finally {
       setSaving(false)
     }
@@ -55,10 +58,10 @@ export default function Reservar() {
         <Link to="/" className="lg:hidden">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-2xl lg:text-3xl font-black">Reservar clase</h1>
+        <h1 className="text-2xl lg:text-3xl font-black">{t('reservar.title')}</h1>
       </div>
 
-      <Section title="Tipo de clase">
+      <Section title={t('reservar.classType')}>
         <div className="flex flex-wrap gap-2">
           {classTypes.map((c) => (
             <button
@@ -68,13 +71,13 @@ export default function Reservar() {
                 type === c.id ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-500'
               }`}
             >
-              {c.name}
+              {localizeClassType(c.name, i18n.language)}
             </button>
           ))}
         </div>
       </Section>
 
-      <Section title="Elige día · julio">
+      <Section title={t('reservar.chooseDay')}>
         <div className="grid grid-cols-5 gap-2 text-center">
           {days.map((d) => (
             <button
@@ -82,14 +85,14 @@ export default function Reservar() {
               onClick={() => setDay(d.id)}
               className={`rounded-xl py-2.5 ${d.id === day ? 'bg-brand-600 text-white' : 'bg-white ring-1 ring-slate-200'}`}
             >
-              <div className={`text-[9px] ${d.id === day ? 'text-brand-200' : 'text-slate-400'}`}>{d.dow}</div>
+              <div className={`text-[9px] ${d.id === day ? 'text-brand-200' : 'text-slate-400'}`}>{t(d.dowKey)}</div>
               <div className="text-sm font-bold">{d.d}</div>
             </button>
           ))}
         </div>
       </Section>
 
-      <Section title="Horas de Manolo">
+      <Section title={t('reservar.manoloHours')}>
         <div className="grid grid-cols-3 gap-2 text-center text-[13px] font-semibold">
           {slots.map((s) => (
             <button
@@ -115,21 +118,21 @@ export default function Reservar() {
         <div className="max-w-2xl mx-auto">
           {done ? (
             <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 text-amber-700 text-sm p-3 text-center font-semibold">
-              ✓ Reserva enviada — pendiente de que Manolo la confirme. Te avisamos en cuanto la acepte.
+              {t('reservar.sent')}
             </div>
           ) : (
             <>
               <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3 flex items-center gap-2 text-[12px] text-slate-500 mb-2">
                 <Info className="w-4 h-4 text-brand-600 shrink-0" />
-                {ct?.name || '…'} · {ct?.duration_min || '—'} min · {dd?.dow} {dd?.d} · {slot || '—'} ·{' '}
-                <b className="text-slate-700">la confirma Manolo</b>
+                {ct ? localizeClassType(ct.name, i18n.language) : '…'} · {ct?.duration_min || '—'} {t('reservar.min')} · {dd ? t(dd.dowKey) : ''} {dd?.d} · {slot || '—'} ·{' '}
+                <b className="text-slate-700">{t('reservar.summaryConfirm')}</b>
               </div>
               <button
                 onClick={confirm}
                 disabled={saving || !type || !slot}
                 className="w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 shadow-lg shadow-brand-600/30 disabled:opacity-60"
               >
-                {saving ? 'Reservando…' : 'Confirmar reserva'}
+                {saving ? t('reservar.saving') : t('reservar.confirm')}
               </button>
             </>
           )}

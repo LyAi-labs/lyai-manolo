@@ -13,11 +13,16 @@ class UserOut(BaseModel):
     streak: int = 0
     lessons_done: int = 0
     hours: int = 0
+    lang: str = "es"
 
 
 class LoginIn(BaseModel):
     identifier: str  # email o nombre de usuario
     password: str
+
+
+class LangIn(BaseModel):
+    lang: str
 
 
 class TokenOut(BaseModel):

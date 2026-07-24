@@ -16,6 +16,7 @@ class User(Base):
     streak = Column(Integer, default=0)
     lessons_done = Column(Integer, default=0)
     hours = Column(Integer, default=0)
+    lang = Column(String, default="es")       # es | fr (idioma de la interfaz)
 
 
 class ClassType(Base):

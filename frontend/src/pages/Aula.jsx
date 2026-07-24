@@ -4,6 +4,7 @@ import { JitsiMeeting } from '@jitsi/react-sdk'
 import {
   PhoneOff, FolderOpen, Play, FileText, Layers, PencilRuler, CheckCheck, Video,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAula } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
 
@@ -27,6 +28,7 @@ async function boardUrlFor(id) {
 }
 
 export default function Aula() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const { user } = useAuth()
   const [data, setData] = useState(null)
@@ -111,14 +113,14 @@ export default function Aula() {
       <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-          <span className="font-semibold text-sm truncate">{data?.title || 'Conversación A2 · con Manolo'}</span>
+          <span className="font-semibold text-sm truncate">{data?.title || t('aula.titleFallback')}</span>
         </div>
 
         {/* Toggle escritorio */}
         <div className="hidden lg:flex items-center gap-1 text-xs font-semibold rounded-full bg-white/5 ring-1 ring-white/10 p-0.5 mx-3">
-          {chip('pizarra', 'Pizarra')}
-          {chip('__share', 'Compartir', shareScreen)}
-          {chip('video', 'Solo vídeo')}
+          {chip('pizarra', t('aula.pizarra'))}
+          {chip('__share', t('aula.share'), shareScreen)}
+          {chip('video', t('aula.videoOnly'))}
         </div>
 
         <Link
@@ -126,7 +128,7 @@ export default function Aula() {
           className="h-9 px-4 rounded-full bg-coral-600 text-sm font-semibold flex items-center gap-1.5 shrink-0"
         >
           <PhoneOff className="w-4 h-4" />
-          <span className="hidden sm:inline">Salir</span>
+          <span className="hidden sm:inline">{t('common.exit')}</span>
         </Link>
       </div>
 
@@ -175,7 +177,7 @@ export default function Aula() {
         <aside className={resourcesCls}>
           <div className="text-xs font-bold text-slate-300 uppercase tracking-wide mb-3 flex items-center gap-1.5">
             <FolderOpen className="w-4 h-4 text-brand-400" />
-            Recursos de la clase
+            {t('aula.resources')}
           </div>
           <div className="space-y-2">
             {resources.map((r) => {
@@ -198,25 +200,25 @@ export default function Aula() {
           <div className="mt-4 rounded-xl bg-brand-600/15 ring-1 ring-brand-500/30 p-3">
             <div className="text-[11px] font-semibold text-brand-300 flex items-center gap-1.5">
               <PencilRuler className="w-3.5 h-3.5" />
-              EJERCICIO EN CURSO
+              {t('aula.exerciseTag')}
             </div>
-            <div className="mt-1.5 text-[13px] font-semibold">Conjuga « être »</div>
+            <div className="mt-1.5 text-[13px] font-semibold">{t('aula.exerciseTitle')}</div>
             <div className="mt-2 h-1.5 rounded-full bg-white/10">
               <div className="h-full rounded-full bg-brand-400" style={{ width: '66%' }} />
             </div>
-            <div className="mt-1 text-[10px] text-slate-400">2 / 3 correctas</div>
+            <div className="mt-1 text-[10px] text-slate-400">{t('aula.correct')}</div>
             <button className="mt-2.5 w-full bg-white text-brand-700 text-xs font-bold rounded-lg py-2 flex items-center justify-center gap-1.5">
               <CheckCheck className="w-3.5 h-3.5" />
-              Corregir en directo
+              {t('aula.correctLive')}
             </button>
           </div>
         </aside>
 
         {/* Tabs móvil */}
         <div className="lg:hidden absolute inset-x-0 bottom-0 h-14 border-t border-white/10 bg-slate-900 grid grid-cols-3 z-50">
-          {tabBtn('video', Video, 'Vídeo')}
-          {tabBtn('pizarra', PencilRuler, 'Pizarra')}
-          {tabBtn('recursos', FolderOpen, 'Recursos')}
+          {tabBtn('video', Video, t('aula.tabVideo'))}
+          {tabBtn('pizarra', PencilRuler, t('aula.tabPizarra'))}
+          {tabBtn('recursos', FolderOpen, t('aula.tabRecursos'))}
         </div>
       </div>
     </div>

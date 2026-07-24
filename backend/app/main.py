@@ -33,6 +33,7 @@ def on_startup():
         from sqlalchemy import text
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lang VARCHAR DEFAULT 'es'"))
     except Exception:
         pass
     run_seed()

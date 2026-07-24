@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import User
-from ..schemas import LoginIn, TokenOut, UserOut
+from ..schemas import LoginIn, TokenOut, UserOut, LangIn
 from ..auth import verify_password, create_token, get_current_user
 
 router = APIRouter(tags=["auth"])
@@ -24,4 +24,14 @@ def login(data: LoginIn, db: Session = Depends(get_db)):
 
 @router.get("/auth/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.patch("/me/lang", response_model=UserOut)
+def set_lang(data: LangIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if data.lang not in ("es", "fr"):
+        raise HTTPException(status_code=400, detail="Idioma no soportado")
+    user.lang = data.lang
+    db.commit()
+    db.refresh(user)
     return user
