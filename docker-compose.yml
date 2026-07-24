@@ -1,0 +1,42 @@
+# Backend de Aula Francés (manolo.lyai.fr).
+# El frontend (manolo-nginx) se gestiona aparte — sirve el build estático.
+name: manolo
+
+services:
+  manolo-postgres:
+    image: postgres:16-alpine
+    container_name: manolo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - manolo_pgdata:/var/lib/postgresql/data
+    networks: [manolo_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  manolo-api:
+    build: ./backend
+    container_name: manolo-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@manolo-postgres:5432/${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      manolo-postgres:
+        condition: service_healthy
+    networks: [manolo_net, traefik_traefik]
+
+networks:
+  manolo_net:
+    driver: bridge
+  traefik_traefik:
+    external: true
+
+volumes:
+  manolo_pgdata:

@@ -1,0 +1,13 @@
+# Secretos — NUNCA commitear
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node (el frontend tiene su propio .gitignore también)
+node_modules/
+dist/
+
+.DS_Store
