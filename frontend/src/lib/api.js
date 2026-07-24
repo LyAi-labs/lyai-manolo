@@ -16,7 +16,7 @@ async function handle(res, path) {
   if (res.status === 401) {
     // Sesión caducada/ inválida → fuera y a login.
     logout()
-    if (!location.hash.startsWith('#/login')) location.hash = '#/login'
+    if (location.pathname !== '/login') location.assign('/login')
     throw new Error('Sesión expirada')
   }
   if (!res.ok) throw new Error(`${res.status} ${path}`)

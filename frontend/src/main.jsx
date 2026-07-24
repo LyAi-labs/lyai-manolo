@@ -1,18 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
 import './index.css'
 
-// HashRouter: funciona sobre nginx estático sin fallback SPA.
-// Al cablear URLs limpias pasaremos a BrowserRouter + try_files.
+// URLs limpias: manolo-nginx hace try_files → index.html (fallback SPA).
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <App />
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   </React.StrictMode>,
 )
