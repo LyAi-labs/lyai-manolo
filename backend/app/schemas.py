@@ -59,3 +59,15 @@ class BookingOut(BaseModel):
     payment: str
     status: str
     room: str
+
+
+class StudentCreate(BaseModel):
+    name: str
+    email: str
+    level: str = "A1"
+    password: Optional[str] = None
+
+
+class StudentCreated(BaseModel):
+    student: UserOut
+    temp_password: str
