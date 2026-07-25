@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthContext'
 
 // La pizarra (Excalidraw + Yjs) es pesada → carga diferida solo en el aula.
 const AulaBoard = lazy(() => import('../components/AulaBoard'))
+const AulaChat = lazy(() => import('../components/AulaChat'))
 
 const NAV_LIVE = [
   ['pizarra', Presentation], ['recursos', FolderOpen], ['vocabulario', BookOpen],
@@ -51,10 +52,13 @@ export default function Aula() {
   const apiRef = useRef(null)
   const reactId = useRef(0)
   const boardApi = useRef(null)
+  const chatApi = useRef(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const onBoardReady = useCallback((h) => { boardApi.current = h }, [])
+  const onChatReady = useCallback((h) => { chatApi.current = h }, [])
   const insertCard = (card) => {
     boardApi.current?.insertFlashcard(card)
+    chatApi.current?.logActivity('card', card.fr)
     if (card.audio) { try { new Audio(card.audio).play().catch(() => {}) } catch { /* sin audio aún */ } }
   }
 
@@ -71,7 +75,7 @@ export default function Aula() {
   const room = data?.room || `AulaFrancesManolo-${id || 'demo'}`
   const cmd = (c) => { try { apiRef.current?.executeCommand(c) } catch { /* api no lista */ } }
   const toggleMic = () => cmd('toggleAudio')
-  const toggleHand = () => { cmd('toggleRaiseHand'); setHandUp((v) => !v) }
+  const toggleHand = () => { cmd('toggleRaiseHand'); setHandUp((v) => { if (!v) chatApi.current?.logActivity('hand'); return !v }) }
   const capture = () => {
     try {
       apiRef.current?.captureLargeVideoScreenshot?.().then((r) => {
@@ -81,11 +85,12 @@ export default function Aula() {
       })
     } catch { /* no disponible */ }
   }
-  const burst = (emoji) => {
+  const addFloat = (emoji) => {
     const rid = ++reactId.current
     setReactions((r) => [...r, { id: rid, emoji, x: 25 + Math.floor((rid * 37) % 50) }])
     setTimeout(() => setReactions((r) => r.filter((x) => x.id !== rid)), 1600)
   }
+  const react = (emoji) => chatApi.current?.logActivity('reaction', emoji)
 
   const NavItem = ({ k, Icon, active, onClick }) => (
     <button
@@ -244,15 +249,16 @@ export default function Aula() {
                 <button key={k} onClick={() => setTab(k)} className={`px-3 py-2 ${tab === k ? 'text-brand-700 border-b-2 border-brand-600' : 'text-slate-400'}`}>{label}</button>
               ))}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 text-[12px] text-slate-500 min-h-[7rem]">
-              {tab === 'notes' ? (
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className={`${tab === 'notes' ? 'flex' : 'hidden'} flex-col flex-1 p-3`}>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('aula.notesPlaceholder')}
                   className="w-full h-full min-h-[6rem] resize-none rounded-lg bg-slate-50 ring-1 ring-slate-200 p-2 text-[12px] outline-none focus:ring-2 focus:ring-brand-500" />
-              ) : tab === 'chat' ? (
-                <div className="text-slate-400 text-center pt-6">{t('aula.chatSoon')}</div>
-              ) : (
-                <div className="text-slate-400 text-center pt-6">{t('aula.activitySoon')}</div>
-              )}
+              </div>
+              <div className={`${tab !== 'notes' ? 'flex' : 'hidden'} flex-col flex-1 min-h-0`}>
+                <Suspense fallback={<div className="p-3 text-slate-400 text-[12px]">{t('common.loading')}</div>}>
+                  <AulaChat room={`aula-${id || 'demo'}-chat`} userName={user?.name} activeTab={tab} onReady={onChatReady} onReaction={addFloat} />
+                </Suspense>
+              </div>
             </div>
             {/* Recursos rápidos */}
             <div className="border-t border-slate-100 p-2.5">
@@ -298,10 +304,10 @@ export default function Aula() {
           <button onClick={toggleHand} className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg ${handUp ? 'bg-amber-50 text-amber-600' : 'hover:bg-slate-50'}`}>
             <Hand className="w-4 h-4" /><span className="hidden sm:inline">{handUp ? t('aula.lowerHand') : t('aula.raiseHand')}</span>
           </button>
-          <button onClick={() => burst('👏')} className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg hover:bg-slate-50">
+          <button onClick={() => react('👏')} className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg hover:bg-slate-50">
             <span className="text-lg leading-none">👏</span><span className="hidden sm:inline">{t('aula.applause')}</span>
           </button>
-          <button onClick={() => burst('😊')} className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg hover:bg-slate-50">
+          <button onClick={() => react('😊')} className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg hover:bg-slate-50">
             <span className="text-lg leading-none">😊</span><span className="hidden sm:inline">{t('aula.reactions')}</span>
           </button>
           <span className="hidden lg:flex flex-col items-center gap-0.5 px-2 py-1 text-slate-400"><MoreHorizontal className="w-4 h-4" />{t('aula.more')}</span>
