@@ -184,6 +184,8 @@ export default {
     quickVocab: 'Vocabulaire',
     quickDialog: 'Dialogue',
     quickCards: 'Cartes',
+    panelTitle: 'Insérer dans le tableau',
+    panelHint: 'Touche une carte pour la mettre sur le tableau — les deux la voient.',
     speak: 'Parler',
     mute: 'Couper le micro',
     pushToTalk: 'Appuie pour parler',

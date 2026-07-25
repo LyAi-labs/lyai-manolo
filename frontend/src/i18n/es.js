@@ -184,6 +184,8 @@ export default {
     quickVocab: 'Vocabulario',
     quickDialog: 'Diálogo',
     quickCards: 'Tarjetas',
+    panelTitle: 'Insertar en la pizarra',
+    panelHint: 'Toca una tarjeta para ponerla en la pizarra — la ven los dos.',
     speak: 'Hablar',
     mute: 'Silenciar',
     pushToTalk: 'Pulsa para hablar',

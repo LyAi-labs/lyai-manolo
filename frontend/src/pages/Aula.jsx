@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { JitsiMeeting } from '@jitsi/react-sdk'
 import {
-  Clock, Users, PhoneOff, MoreVertical, MoreHorizontal, Volume2, Send,
+  Clock, Users, PhoneOff, MoreVertical, MoreHorizontal, Volume2, X,
   Presentation, FolderOpen, BookOpen, MessagesSquare, ListChecks,
   CalendarDays, Target, BarChart3, User, Bell, HelpCircle,
   Mic, MicOff, Hand, Camera, Share2, Circle, SquareStack,
@@ -20,7 +20,18 @@ const NAV_LIVE = [
 ]
 const NAV_PROGRESS = [['misClases', CalendarDays], ['misRetos', Target], ['estadisticas', BarChart3]]
 const NAV_SETTINGS = [['perfil', User], ['notificaciones', Bell], ['ayuda', HelpCircle]]
-const VOCAB_IN_USE = ['Bonjour', 'Je m’appelle', 'Comment tu t’appelles ?', 'Merci', 'Au revoir']
+// Flashcards de la Unidad 1 (emoji + FR + traducción + audio Kore precableado
+// por slug md5[:12]; suena cuando el cron genere ese audio).
+const FLASHCARDS = [
+  { fr: 'Bonjour', es: 'Buenos días / Hola', emoji: '🤝', audio: '/audio/vocab/ebc58ab2cb48.ogg' },
+  { fr: 'Salut', es: 'Hola (informal)', emoji: '👋', audio: '/audio/vocab/af4fef1bc086.ogg' },
+  { fr: 'Bonsoir', es: 'Buenas tardes / noches', emoji: '🌆', audio: '/audio/vocab/efc783916db2.ogg' },
+  { fr: 'Au revoir', es: 'Adiós', emoji: '✋', audio: '/audio/vocab/ba9ad7df5483.ogg' },
+  { fr: 'Merci', es: 'Gracias', emoji: '🙏', audio: '/audio/vocab/acff28932ea8.ogg' },
+  { fr: "Je m'appelle", es: 'Me llamo…', emoji: '🙋', audio: '/audio/vocab/38ab6c380c34.ogg' },
+  { fr: "Comment tu t'appelles ?", es: '¿Cómo te llamas?', emoji: '❓', audio: '/audio/vocab/4b6584dbf1f5.ogg' },
+  { fr: "S'il vous plaît", es: 'Por favor', emoji: '🙏', audio: '/audio/vocab/82ffbdb45e6c.ogg' },
+]
 
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
@@ -39,6 +50,13 @@ export default function Aula() {
   const [reactions, setReactions] = useState([])
   const apiRef = useRef(null)
   const reactId = useRef(0)
+  const boardApi = useRef(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+  const onBoardReady = useCallback((h) => { boardApi.current = h }, [])
+  const insertCard = (card) => {
+    boardApi.current?.insertFlashcard(card)
+    if (card.audio) { try { new Audio(card.audio).play().catch(() => {}) } catch { /* sin audio aún */ } }
+  }
 
   const scenesRaw = t('aula.scenes', { returnObjects: true })
   const scenes = Array.isArray(scenesRaw) ? scenesRaw : []
@@ -69,15 +87,16 @@ export default function Aula() {
     setTimeout(() => setReactions((r) => r.filter((x) => x.id !== rid)), 1600)
   }
 
-  const NavItem = ({ k, Icon, active }) => (
-    <div
-      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] cursor-default ${
+  const NavItem = ({ k, Icon, active, onClick }) => (
+    <button
+      onClick={onClick}
+      className={`w-full text-left flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] ${
         active ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-slate-500 hover:bg-slate-50'
-      }`}
+      } ${onClick ? '' : 'cursor-default'}`}
     >
       <Icon className="w-4 h-4" />
       {t(`aula.nav.${k}`)}
-    </div>
+    </button>
   )
 
   return (
@@ -138,7 +157,10 @@ export default function Aula() {
           <div className="p-3 space-y-4 flex-1">
             <div>
               <div className="text-[9px] font-bold text-slate-400 tracking-wider mb-1.5 px-1">{t('aula.navLive')}</div>
-              {NAV_LIVE.map(([k, Icon]) => <NavItem key={k} k={k} Icon={Icon} active={k === 'pizarra'} />)}
+              {NAV_LIVE.map(([k, Icon]) => (
+                <NavItem key={k} k={k} Icon={Icon} active={k === 'pizarra'}
+                  onClick={['recursos', 'vocabulario'].includes(k) ? () => setPanelOpen(true) : undefined} />
+              ))}
             </div>
             <div>
               <div className="text-[9px] font-bold text-slate-400 tracking-wider mb-1.5 px-1">{t('aula.navProgress')}</div>
@@ -166,7 +188,7 @@ export default function Aula() {
               <b className="text-brand-600">{t('aula.objective')}</b> <span className="text-slate-600">{goal}</span>
             </div>
             <Suspense fallback={<div className="w-full h-full grid place-items-center text-slate-400 text-sm">{t('common.loading')}</div>}>
-              <AulaBoard room={`aula-${id || 'demo'}`} userName={user?.name} />
+              <AulaBoard room={`aula-${id || 'demo'}`} userName={user?.name} onReady={onBoardReady} />
             </Suspense>
             {/* Reacciones */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -177,14 +199,15 @@ export default function Aula() {
           </div>
           {/* Vocabulario en uso (strip) */}
           <div className="shrink-0 border-t border-slate-200 px-3 py-2">
-            <div className="text-[9px] font-bold text-slate-400 mb-1">{t('aula.vocabInUse')} ({VOCAB_IN_USE.length})</div>
+            <div className="text-[9px] font-bold text-slate-400 mb-1">{t('aula.vocabInUse')} ({FLASHCARDS.length})</div>
             <div className="flex gap-1.5 flex-wrap">
-              {VOCAB_IN_USE.map((w) => (
-                <span key={w} className="text-[11px] bg-slate-100 rounded-full px-2.5 py-1 flex items-center gap-1 text-slate-700">
-                  {w} <Volume2 className="w-3 h-3 text-brand-500" />
-                </span>
+              {FLASHCARDS.slice(0, 5).map((c) => (
+                <button key={c.fr} onClick={() => insertCard(c)} title={c.es}
+                  className="text-[11px] bg-slate-100 hover:bg-brand-50 rounded-full px-2.5 py-1 flex items-center gap-1 text-slate-700">
+                  {c.fr} <Volume2 className="w-3 h-3 text-brand-500" />
+                </button>
               ))}
-              <span className="text-[11px] bg-brand-600 text-white rounded-full w-7 grid place-items-center">+</span>
+              <button onClick={() => setPanelOpen(true)} className="text-[11px] bg-brand-600 text-white rounded-full w-7 grid place-items-center">+</button>
             </div>
           </div>
         </section>
@@ -236,9 +259,10 @@ export default function Aula() {
               <div className="text-[10px] font-bold text-slate-400 mb-1.5">{t('aula.quickResources')}</div>
               <div className="grid grid-cols-3 gap-1.5 text-[10px] font-semibold text-slate-600">
                 {[[BookOpen, 'quickVocab'], [MessagesSquare, 'quickDialog'], [SquareStack, 'quickCards']].map(([Icon, k]) => (
-                  <div key={k} className="flex flex-col items-center gap-1 rounded-lg ring-1 ring-slate-200 py-2">
+                  <button key={k} onClick={() => setPanelOpen(true)}
+                    className="flex flex-col items-center gap-1 rounded-lg ring-1 ring-slate-200 hover:ring-brand-300 hover:bg-brand-50 py-2">
                     <Icon className="w-4 h-4 text-brand-500" />{t(`aula.${k}`)}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -283,6 +307,29 @@ export default function Aula() {
           <span className="hidden lg:flex flex-col items-center gap-0.5 px-2 py-1 text-slate-400"><MoreHorizontal className="w-4 h-4" />{t('aula.more')}</span>
         </div>
       </footer>
+
+      {/* Panel de recursos → inserta flashcards en la pizarra compartida */}
+      {panelOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 grid place-items-end sm:place-items-center p-0 sm:p-6" onClick={() => setPanelOpen(false)}>
+          <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-extrabold text-lg flex items-center gap-2 text-slate-800"><SquareStack className="w-5 h-5 text-brand-600" />{t('aula.panelTitle')}</div>
+              <button onClick={() => setPanelOpen(false)} className="text-slate-400"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="text-[12px] text-slate-400 mb-3">{t('aula.panelHint')}</div>
+            <div className="grid grid-cols-2 gap-2">
+              {FLASHCARDS.map((c) => (
+                <button key={c.fr} onClick={() => insertCard(c)}
+                  className="text-left rounded-xl ring-1 ring-slate-200 hover:ring-brand-300 hover:bg-brand-50 p-3">
+                  <div className="text-2xl">{c.emoji}</div>
+                  <div className="text-[13px] font-bold text-slate-800 mt-1">{c.fr}</div>
+                  <div className="text-[11px] text-slate-400">{c.es}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

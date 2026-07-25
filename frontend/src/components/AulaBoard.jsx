@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Excalidraw } from '@excalidraw/excalidraw'
+import { Excalidraw, convertToExcalidrawElements } from '@excalidraw/excalidraw'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { ExcalidrawBinding, yjsToExcalidraw } from 'y-excalidraw'
@@ -12,10 +12,12 @@ if (typeof window !== 'undefined' && !window.EXCALIDRAW_ASSET_PATH) {
 const COLORS = ['#4F46E5', '#e11d48', '#059669', '#d97706', '#0891b2', '#7c3aed']
 
 // Pizarra Excalidraw COMPARTIDA (Yjs + y-websocket → contenedor manolo-yjs).
-export default function AulaBoard({ room, userName }) {
+export default function AulaBoard({ room, userName, onReady }) {
   const [api, setApi] = useState(null)
   const [binding, setBinding] = useState(null)
   const containerRef = useRef(null)
+  const apiRef = useRef(null)
+  const offsetRef = useRef(0)
 
   // Un Y.Doc + provider por sala.
   const { ydoc, yElements, yAssets, provider } = useMemo(() => {
@@ -40,6 +42,29 @@ export default function AulaBoard({ room, userName }) {
     setBinding(b)
     return () => { b.destroy(); setBinding(null) }
   }, [api, yElements, yAssets, provider])
+
+  useEffect(() => { apiRef.current = api }, [api])
+
+  // Inserta una flashcard (emoji + FR + traducción) en la pizarra → la sincroniza
+  // Yjs, así que aparece para ambos. Se expone al aula vía onReady.
+  useEffect(() => {
+    if (!api || !onReady) return
+    const insertFlashcard = (card) => {
+      const a = apiRef.current
+      if (!a) return
+      const n = offsetRef.current++
+      const x = 160 + (n % 5) * 46
+      const y = 130 + (n % 3) * 46
+      const els = convertToExcalidrawElements([
+        { type: 'rectangle', x, y, width: 152, height: 104, backgroundColor: '#ffffff', strokeColor: '#4F46E5', strokeWidth: 2, roundness: { type: 3 }, fillStyle: 'solid' },
+        { type: 'text', x: x + 12, y: y + 10, text: card.emoji, fontSize: 28 },
+        { type: 'text', x: x + 12, y: y + 50, text: card.fr, fontSize: 18, strokeColor: '#1e293b' },
+        { type: 'text', x: x + 12, y: y + 78, text: card.es, fontSize: 12, strokeColor: '#64748b' },
+      ])
+      a.updateScene({ elements: [...a.getSceneElements(), ...els] })
+    }
+    onReady({ insertFlashcard })
+  }, [api, onReady])
 
   const initialData = useMemo(() => ({ elements: yjsToExcalidraw(yElements), appState: { viewBackgroundColor: '#ffffff' } }), [yElements])
 
