@@ -6,6 +6,7 @@ export default {
     done: 'Hecho',
     enterAula: 'Entrar al aula',
   },
+  role: { teacher: 'Profesor', student: 'Alumno' },
   nav: {
     brand: 'Aula Francés',
     home: 'Inicio',

@@ -66,6 +66,7 @@ export default function Aula() {
   const scenesRaw = t('aula.scenes', { returnObjects: true })
   const scenes = Array.isArray(scenesRaw) ? scenesRaw : []
   const goal = scenes[scene]?.goal || ''
+  const meTeacher = ['admin', 'teacher'].includes(user?.role)
 
   useEffect(() => { getAula(id).then(setData).catch(() => {}) }, [id])
   useEffect(() => {
@@ -168,6 +169,13 @@ export default function Aula() {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-3 shrink-0 ml-auto md:ml-0">
+            <span className={`hidden md:flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-full ring-1 ${meTeacher ? 'bg-coral-50 ring-coral-200' : 'bg-brand-50 ring-brand-100'}`} title={meTeacher ? t('role.teacher') : t('role.student')}>
+              <span className={`w-6 h-6 rounded-full text-white grid place-items-center text-[10px] font-black ${meTeacher ? 'bg-gradient-to-br from-coral-500 to-coral-700' : 'bg-gradient-to-br from-brand-500 to-brand-700'}`}>{user?.name?.charAt(0) || '?'}</span>
+              <span className="leading-none text-left">
+                <span className={`block text-[10px] font-bold ${meTeacher ? 'text-coral-700' : 'text-brand-700'}`}>{user?.name || '—'}</span>
+                <span className={`text-[8px] font-bold ${meTeacher ? 'text-coral-500' : 'text-brand-500'}`}>{(meTeacher ? t('role.teacher') : t('role.student')).toUpperCase()}</span>
+              </span>
+            </span>
             <div className="hidden sm:block text-right leading-tight">
               <div className="text-[12px] font-mono text-slate-700 flex items-center gap-1 justify-end"><Clock className="w-3.5 h-3.5" />{mmss(elapsed)} / {t('aula.totalTime')}</div>
               <div className="text-[9px] text-slate-400">{t('aula.classTime')}</div>

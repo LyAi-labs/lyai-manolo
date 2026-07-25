@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Home, CalendarPlus, Library, User, Shield, LogOut } from 'lucide-react'
+import { Home, CalendarPlus, Library, User, Shield, LogOut, GraduationCap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
 import LangSwitch from './LangSwitch'
@@ -51,7 +51,18 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="mt-auto space-y-1">
+        <div className="mt-auto space-y-2">
+          {/* Identidad + rol (coral = profesor · índigo = alumno) */}
+          <div className={`rounded-xl p-2.5 flex items-center gap-2.5 ring-1 ${isAdmin ? 'bg-coral-50 ring-coral-200' : 'bg-brand-50 ring-brand-100'}`}>
+            <div className={`w-9 h-9 rounded-full grid place-items-center font-black text-sm text-white ring-2 ring-white shadow shrink-0 ${isAdmin ? 'bg-gradient-to-br from-coral-500 to-coral-700' : 'bg-gradient-to-br from-brand-500 to-brand-700'}`}>{initial}</div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-bold text-slate-800 leading-tight truncate">{user?.name || '—'}</div>
+              <div className={`text-[10px] font-bold flex items-center gap-1 ${isAdmin ? 'text-coral-600' : 'text-brand-600'}`}>
+                {isAdmin ? <GraduationCap className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                {isAdmin ? t('role.teacher').toUpperCase() : `${t('role.student').toUpperCase()}${user?.level ? ' · ' + user.level : ''}`}
+              </div>
+            </div>
+          </div>
           {isAdmin && (
             <NavLink
               to="/profe"
@@ -68,7 +79,7 @@ export default function Layout() {
             onClick={doLogout}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-50"
           >
-            <LogOut className="w-4 h-4" /> {t('nav.logout', { name: user?.name })}
+            <LogOut className="w-4 h-4" /> {t('common.exit')}
           </button>
         </div>
       </aside>
@@ -81,7 +92,10 @@ export default function Layout() {
           <button onClick={doLogout} className="text-slate-400" aria-label={t('common.exit')}>
             <LogOut className="w-5 h-5" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-bold">
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isAdmin ? 'bg-coral-100 text-coral-700' : 'bg-brand-100 text-brand-700'}`}>
+            {isAdmin ? t('role.teacher') : t('role.student')}
+          </span>
+          <div className={`w-8 h-8 rounded-full text-white grid place-items-center text-xs font-bold ring-2 ${isAdmin ? 'bg-gradient-to-br from-coral-500 to-coral-700 ring-coral-300' : 'bg-gradient-to-br from-brand-500 to-brand-700 ring-brand-200'}`}>
             {initial}
           </div>
         </div>
