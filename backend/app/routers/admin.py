@@ -109,6 +109,7 @@ def today(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     )
     out = [
         {
+            "id": b.id,
             "time": b.time,
             "student": b.user.name if b.user else None,
             "type": f"{b.class_type.name} {b.level or ''}".strip(),
