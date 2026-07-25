@@ -1,5 +1,5 @@
 from .database import SessionLocal
-from .models import User, ClassType, Availability, Lesson, Booking, Vocab
+from .models import User, ClassType, Availability, Lesson, Booking, Vocab, LessonProgress
 from .auth import hash_password
 from .config import settings
 from .curriculum import CURRICULUM
@@ -14,6 +14,8 @@ def run_curriculum_seed():
         if (db.query(Lesson).count() == len(CURRICULUM)
                 and db.query(Vocab).count() == expected_vocab):
             return
+        # Limpiar en orden FK-safe: el progreso referencia lecciones (FK).
+        db.query(LessonProgress).delete()
         db.query(Vocab).delete()
         db.query(Lesson).delete()
         db.flush()
