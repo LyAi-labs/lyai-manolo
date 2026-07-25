@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Play, Pause, Volume2, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getLesson, getVocab, getMyProgress, completeLesson } from '../lib/api'
+import { getLesson, getVocab, getMyProgress, completeLesson, pingStudy } from '../lib/api'
 
 const STEPS = ['leccion.stepGram', 'leccion.stepDialog', 'leccion.stepEx', 'leccion.stepTest']
 
@@ -25,6 +25,13 @@ export default function Leccion() {
     return () => {
       if (audioRef.current) audioRef.current.pause()
     }
+  }, [id])
+
+  // Heartbeat de estudio: cuenta el tiempo real en la lección (1 min cada 60 s).
+  useEffect(() => {
+    const first = setTimeout(() => pingStudy(1).catch(() => {}), 20000)
+    const iv = setInterval(() => pingStudy(1).catch(() => {}), 60000)
+    return () => { clearTimeout(first); clearInterval(iv) }
   }, [id])
 
   function marcarCompletada() {

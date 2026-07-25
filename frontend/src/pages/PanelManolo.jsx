@@ -2,17 +2,24 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarClock, Upload, Clock, Plus, Video, ArrowLeft, Coffee,
-  UserPlus, X, KeyRound, BookOpen, Check, Lightbulb, ChevronRight, Sparkles,
+  UserPlus, X, KeyRound, BookOpen, Check, Lightbulb, ChevronRight, Sparkles, SlidersHorizontal,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   getAdminStats, getAdminToday, getStudents, createStudent, getStudentProgress, finalizeClass,
-  getPendingBookings, confirmBooking, rejectBooking,
+  getPendingBookings, confirmBooking, rejectBooking, getStudentSkills, setStudentSkills,
 } from '../lib/api'
 import { localizeTypeLabel } from '../i18n/labels'
 import MaterialView from '../components/MaterialView'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1']
+// Habilidades que evalúa Manolo (mismos colores que el donut del Progreso).
+const SKILLS = [
+  { key: 'oral_comp', label: 'prog.skOralComp', color: '#6366f1' },
+  { key: 'oral_exp', label: 'prog.skOralExp', color: '#34d399' },
+  { key: 'written_comp', label: 'prog.skWrittenComp', color: '#fbbf24' },
+  { key: 'written_exp', label: 'prog.skWrittenExp', color: '#38bdf8' },
+]
 
 export default function PanelManolo() {
   const { t, i18n } = useTranslation()
@@ -166,10 +173,32 @@ function PrepModal({ prep, onClose }) {
   const { t } = useTranslation()
   const { student, completed, count, loading } = prep
   const [mode, setMode] = useState('prep')
+  const [tab, setTab] = useState('progress') // progress | eval
+  const [skills, setSkills] = useState({ oral_comp: 50, oral_exp: 50, written_comp: 50, written_exp: 50 })
+  const [savingSk, setSavingSk] = useState(false)
+  const [savedSk, setSavedSk] = useState(false)
   const [notes, setNotes] = useState('')
   const [generating, setGenerating] = useState(false)
   const [material, setMaterial] = useState(null)
   const [error, setError] = useState('')
+
+  // Precarga la evaluación actual (o 50 por defecto si aún sin evaluar).
+  useEffect(() => {
+    getStudentSkills(student.id)
+      .then((s) => setSkills({
+        oral_comp: s.oral_comp ?? 50, oral_exp: s.oral_exp ?? 50,
+        written_comp: s.written_comp ?? 50, written_exp: s.written_exp ?? 50,
+      }))
+      .catch(() => {})
+  }, [student.id])
+
+  const general = Math.round((skills.oral_comp + skills.oral_exp + skills.written_comp + skills.written_exp) / 4)
+
+  async function saveSkills() {
+    setSavingSk(true); setSavedSk(false)
+    try { await setStudentSkills(student.id, skills); setSavedSk(true); setTimeout(() => setSavedSk(false), 2500) }
+    catch { /* deja el estado */ } finally { setSavingSk(false) }
+  }
 
   async function generar() {
     setError('')
@@ -201,36 +230,76 @@ function PrepModal({ prep, onClose }) {
 
         {mode === 'prep' && (
           <>
-            <div className="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-brand-600" />
-              <div className="text-[13px] text-brand-800">{loading ? '…' : t('panel.studiedLessons', { count })}</div>
+            {/* Conmutador Progreso | Evaluar */}
+            <div className="flex gap-1 p-1 rounded-xl bg-slate-100 mb-4 text-[12px] font-bold">
+              <button onClick={() => setTab('progress')} className={`flex-1 text-center py-1.5 rounded-lg ${tab === 'progress' ? 'bg-white text-brand-600 shadow-soft' : 'text-slate-500'}`}>{t('panel.skills.tabProgress')}</button>
+              <button onClick={() => setTab('eval')} className={`flex-1 text-center py-1.5 rounded-lg ${tab === 'eval' ? 'bg-white text-coral-600 shadow-soft' : 'text-slate-500'}`}>{t('panel.skills.tabEval')}</button>
             </div>
-            <div className="mt-3">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">{t('panel.completedLessons')}</div>
-              {loading ? (
-                <div className="text-[13px] text-slate-400">{t('common.loading')}</div>
-              ) : completed && completed.length ? (
-                <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                  {completed.map((l) => (
-                    <div key={l.id} className="flex items-center gap-2 text-[13px]">
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-medium">{l.title}</span>
-                      <span className="text-[10px] text-slate-400">{l.level}</span>
+
+            {tab === 'progress' ? (
+              <>
+                <div className="rounded-xl bg-brand-50 ring-1 ring-brand-100 p-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-brand-600" />
+                  <div className="text-[13px] text-brand-800">{loading ? '…' : t('panel.studiedLessons', { count })}</div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">{t('panel.completedLessons')}</div>
+                  {loading ? (
+                    <div className="text-[13px] text-slate-400">{t('common.loading')}</div>
+                  ) : completed && completed.length ? (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {completed.map((l) => (
+                        <div key={l.id} className="flex items-center gap-2 text-[13px]">
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="font-medium">{l.title}</span>
+                          <span className="text-[10px] text-slate-400">{l.level}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-[13px] text-slate-400">{t('panel.noCompleted')}</div>
+                  )}
+                </div>
+                <div className="mt-3 rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3 flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="text-[12px] text-amber-800"><b>{t('panel.recommendationLabel')}</b> {t('panel.recommendationBody')}</div>
+                </div>
+                <button onClick={() => setMode('finalize')} className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 flex items-center justify-center gap-2">
+                  <Sparkles className="w-4 h-4" /> {t('panel.finalize')}
+                </button>
+                <button onClick={onClose} className="mt-2 w-full text-slate-500 text-sm font-semibold py-2">{t('common.close')}</button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 text-[13px] font-bold text-slate-800"><SlidersHorizontal className="w-4 h-4 text-coral-500" /> {t('panel.skills.evalTitle')}</div>
+                <p className="text-[11px] text-slate-400 mt-0.5 mb-4">{t('panel.skills.evalNote')}</p>
+                <div className="space-y-4">
+                  {SKILLS.map((sk) => (
+                    <div key={sk.key}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="flex items-center gap-2 text-[12.5px] text-slate-600 font-medium"><span className="w-2.5 h-2.5 rounded-full" style={{ background: sk.color }} /> {t(sk.label)}</span>
+                        <span className="text-[12px] font-bold text-slate-800 tabular-nums">{skills[sk.key]}%</span>
+                      </div>
+                      <input
+                        type="range" min="0" max="100" value={skills[sk.key]}
+                        onChange={(e) => setSkills((s) => ({ ...s, [sk.key]: Number(e.target.value) }))}
+                        style={{ accentColor: sk.color }}
+                        className="w-full h-2 cursor-pointer"
+                        aria-label={t(sk.label)}
+                      />
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-[13px] text-slate-400">{t('panel.noCompleted')}</div>
-              )}
-            </div>
-            <div className="mt-3 rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3 flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-              <div className="text-[12px] text-amber-800"><b>{t('panel.recommendationLabel')}</b> {t('panel.recommendationBody')}</div>
-            </div>
-            <button onClick={() => setMode('finalize')} className="mt-4 w-full bg-brand-600 text-white text-sm font-bold rounded-xl py-3 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4" /> {t('panel.finalize')}
-            </button>
-            <button onClick={onClose} className="mt-2 w-full text-slate-500 text-sm font-semibold py-2">{t('common.close')}</button>
+                <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3">
+                  <div className="text-[12px] font-semibold text-slate-500">{t('panel.skills.general')}</div>
+                  <div className="text-[20px] font-black text-slate-800">{general}%</div>
+                </div>
+                <button onClick={saveSkills} disabled={savingSk} className="mt-4 w-full bg-coral-600 hover:bg-coral-700 text-white text-sm font-bold rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-60">
+                  {savedSk ? <><Check className="w-4 h-4" /> {t('panel.skills.saved')}</> : <><Check className="w-4 h-4" /> {savingSk ? t('panel.skills.saving') : t('panel.skills.save')}</>}
+                </button>
+                <button onClick={onClose} className="mt-2 w-full text-slate-500 text-sm font-semibold py-2">{t('common.close')}</button>
+              </>
+            )}
           </>
         )}
 

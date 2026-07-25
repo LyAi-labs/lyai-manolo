@@ -16,6 +16,8 @@ def _serialize(b: Booking) -> dict:
         "type": b.class_type.name if b.class_type else "",
         "level": b.level or "",
         "when": b.when_label or f"{b.date} · {b.time}",
+        "date": b.date or "",
+        "time": b.time or "",
         "payment": b.payment_status,
         "status": b.status,
         "room": b.room,

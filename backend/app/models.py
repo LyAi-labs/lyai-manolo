@@ -17,6 +17,7 @@ class User(Base):
     lessons_done = Column(Integer, default=0)
     hours = Column(Integer, default=0)
     lang = Column(String, default="es")       # es | fr (idioma de la interfaz)
+    created_at = Column(String, nullable=True)  # ISO · alta de la cuenta ("miembro desde")
 
 
 class ClassType(Base):
@@ -90,3 +91,24 @@ class ClassReport(Base):
     teacher_notes = Column(Text)
     material = Column(Text)   # JSON: {resumen, ejercicios[], flashcards[], deberes}
     created_at = Column(String)
+
+
+class DailyStudy(Base):
+    """Minutos de estudio en vivo acumulados por día (heartbeat desde lección/aula)."""
+    __tablename__ = "daily_study"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    day = Column(String, index=True)   # YYYY-MM-DD
+    minutes = Column(Integer, default=0)
+
+
+class SkillRating(Base):
+    """Dominio por habilidades (0–100) que evalúa Manolo. NULL = sin evaluar."""
+    __tablename__ = "skill_ratings"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True)
+    oral_comp = Column(Integer, nullable=True)
+    oral_exp = Column(Integer, nullable=True)
+    written_comp = Column(Integer, nullable=True)
+    written_exp = Column(Integer, nullable=True)
+    updated_at = Column(String)

@@ -45,6 +45,15 @@ async function patch(path, body) {
   return handle(res, path)
 }
 
+async function put(path, body) {
+  const res = await fetch(BASE + path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  })
+  return handle(res, path)
+}
+
 export async function login(identifier, password) {
   // El login no lleva token; un 401 aquí = credenciales malas (sin redirect).
   const res = await fetch(BASE + '/auth/login', {
@@ -65,7 +74,9 @@ export const updateLang = (lang) => patch('/me/lang', { lang })
 export const me = () => get('/auth/me')
 export const getClassTypes = () => get('/class-types')
 export const getAvailability = (date) => get('/availability' + (date ? `?date=${date}` : ''))
+export const getAvailabilityMonth = (ym) => get(`/availability/month?ym=${ym}`)
 export const getLessons = () => get('/lessons')
+export const getCatalogStats = () => get('/catalog/stats')
 export const getLesson = (id) => get(`/lessons/${id}`)
 export const getVocab = (id) => get(`/lessons/${id}/vocab`)
 export const getAula = (id) => get(`/aula/${id}`)
@@ -81,5 +92,10 @@ export const rejectBooking = (id) => post(`/admin/bookings/${id}/reject`, {})
 export const getStudentProgress = (sid) => get(`/admin/students/${sid}/progress`)
 export const completeLesson = (id) => post(`/lessons/${id}/complete`, {})
 export const getMyProgress = () => get('/me/progress')
+export const getWeeklyProgress = () => get('/me/progress/weekly')
+export const getProgressFull = () => get('/me/progress/full')
+export const pingStudy = (minutes = 1) => post('/me/study/ping', { minutes })
+export const getStudentSkills = (sid) => get(`/admin/students/${sid}/skills`)
+export const setStudentSkills = (sid, payload) => put(`/admin/students/${sid}/skills`, payload)
 export const finalizeClass = (payload) => post('/admin/classes/finalize', payload)
 export const getHomework = () => get('/me/homework')

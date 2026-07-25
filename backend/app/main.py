@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 from .database import Base, engine
 from .seed import run_seed, run_curriculum_seed
-from .routers import auth, catalog, bookings, admin, telegram
+from .routers import auth, catalog, bookings, admin, telegram, progress
 
 app = FastAPI(title="Aula Francés API", version="0.1.0")
 
@@ -34,6 +34,8 @@ def on_startup():
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR"))
             conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lang VARCHAR DEFAULT 'es'"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at VARCHAR"))
+            conn.execute(text("UPDATE users SET created_at = '2026-07-01T00:00:00' WHERE created_at IS NULL"))
     except Exception:
         pass
     run_seed()
@@ -45,6 +47,7 @@ app.include_router(catalog.router, prefix="/api")
 app.include_router(bookings.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(telegram.router, prefix="/api")
+app.include_router(progress.router, prefix="/api")
 
 
 @app.get("/api/health")

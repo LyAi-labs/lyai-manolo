@@ -168,6 +168,7 @@ def create_student(
         role="student",
         level=(data.level or "A1"),
         hashed_password=hash_password(temp_password),
+        created_at=datetime.utcnow().isoformat(),
     )
     db.add(student)
     db.commit()

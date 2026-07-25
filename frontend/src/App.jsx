@@ -8,6 +8,9 @@ import Biblioteca from './pages/Biblioteca'
 import Leccion from './pages/Leccion'
 import MiPanel from './pages/MiPanel'
 import PanelManolo from './pages/PanelManolo'
+import Progreso from './pages/Progreso'
+import Clases from './pages/Clases'
+import Proximamente from './pages/Proximamente'
 import Aula from './pages/Aula'
 
 export default function App() {
@@ -22,8 +25,11 @@ export default function App() {
 
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/clases" element={<Clases />} />
           <Route path="/reservar" element={<Reservar />} />
           <Route path="/biblioteca" element={<Biblioteca />} />
+          <Route path="/delf" element={<Proximamente icon="award" tKey="delf" />} />
+          <Route path="/progreso" element={<Progreso />} />
           <Route path="/leccion/:id" element={<Leccion />} />
           <Route path="/panel" element={<MiPanel />} />
 

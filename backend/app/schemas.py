@@ -62,6 +62,8 @@ class BookingOut(BaseModel):
     type: str
     level: str
     when: str
+    date: str = ""
+    time: str = ""
     payment: str
     status: str
     room: str
