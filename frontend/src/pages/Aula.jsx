@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { JitsiMeeting } from '@jitsi/react-sdk'
 import {
@@ -11,17 +11,8 @@ import { useTranslation } from 'react-i18next'
 import { getAula } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
 
-// Sala de pizarra determinista por clase (misma sala Excalidraw, cifrada E2E).
-async function boardUrlFor(id) {
-  const digest = new Uint8Array(
-    await crypto.subtle.digest('SHA-256', new TextEncoder().encode('aula-frances-manolo:' + id)),
-  )
-  const roomId = [...digest.slice(0, 10)].map((b) => b.toString(16).padStart(2, '0')).join('')
-  let bin = ''
-  digest.slice(16, 32).forEach((b) => (bin += String.fromCharCode(b)))
-  const key = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-  return `https://excalidraw.com/#room=${roomId},${key}`
-}
+// La pizarra (Excalidraw + Yjs) es pesada → carga diferida solo en el aula.
+const AulaBoard = lazy(() => import('../components/AulaBoard'))
 
 const TOOLS = [
   ['select', MousePointer2], ['pen', Pencil], ['marker', Highlighter], ['eraser', Eraser],
@@ -38,7 +29,6 @@ export default function Aula() {
   const { id } = useParams()
   const { user } = useAuth()
   const [data, setData] = useState(null)
-  const [board, setBoard] = useState('')
   const [scene, setScene] = useState(0)
   const [now, setNow] = useState(() => new Date())
   const [participants, setParticipants] = useState(1)
@@ -55,7 +45,6 @@ export default function Aula() {
   const total = scenes.length || 7
 
   useEffect(() => { getAula(id).then(setData).catch(() => {}) }, [id])
-  useEffect(() => { boardUrlFor(id || 'demo').then(setBoard) }, [id])
   useEffect(() => {
     const iv = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(iv)
@@ -195,9 +184,9 @@ export default function Aula() {
           <div className="absolute top-2 left-2 right-2 z-10 text-[12px] bg-white/95 rounded-lg ring-1 ring-slate-200 px-3 py-1.5 shadow-sm">
             <b className="text-brand-600">{t('aula.objective')}:</b> <span className="text-slate-600">{goal}</span>
           </div>
-          {board && (
-            <iframe src={board} title="Pizarra" className="w-full h-full border-0" allow="clipboard-write; fullscreen" />
-          )}
+          <Suspense fallback={<div className="w-full h-full grid place-items-center text-slate-400 text-sm">{t('common.loading')}</div>}>
+            <AulaBoard room={`aula-${id || 'demo'}`} userName={user?.name} />
+          </Suspense>
           {/* Vocabulario en uso */}
           <div className="absolute bottom-0 inset-x-0 z-10 bg-white/95 border-t border-slate-200 px-3 py-2">
             <div className="text-[9px] font-bold text-slate-400 mb-1">{t('aula.vocabInUse')} ({VOCAB_IN_USE.length})</div>

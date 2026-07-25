@@ -1,0 +1,11 @@
+{
+  "name": "manolo-yjs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de colaboración Yjs (y-websocket) para la pizarra del aula.",
+  "main": "server.js",
+  "dependencies": {
+    "ws": "^8.18.0",
+    "y-websocket": "^1.5.4"
+  }
+}

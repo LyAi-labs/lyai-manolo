@@ -39,6 +39,13 @@ services:
         condition: service_healthy
     networks: [manolo_net, traefik_traefik]
 
+  # Colaboración en tiempo real de la pizarra (Yjs · y-websocket).
+  manolo-yjs:
+    build: ./collab
+    container_name: manolo-yjs
+    restart: unless-stopped
+    networks: [traefik_traefik]
+
 networks:
   manolo_net:
     driver: bridge
